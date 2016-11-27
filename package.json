@@ -1,0 +1,44 @@
+{
+  "name": "react-mirror",
+  "version": "0.0.0",
+  "description": "Fractal state management for react",
+  "keywords": [
+    "state",
+    "state management",
+    "react",
+    "redux",
+    "cycle"
+  ],
+  "homepage": "https://github.com/ashtonwar/react-mirror#readme",
+  "bugs": {
+    "url": "https://github.com/ashtonwar/react-mirror/issues",
+    "email": "me@ashtonwar.com"
+  },
+  "license": "ISC",
+  "author": "Ashton <me@ashtonwar.com> (http://www.ashtonwar.com/)",
+  "main": "build/index.js",
+  "repository": "ashtonwar/react-mirror",
+  "scripts": {
+    "prebuild": "rimraf build",
+    "build": "set NODE_ENV=production&& webpack",
+    "postbuild": "git add . --all",
+    "start": "jest --watch"
+  },
+  "dependencies": {
+    "redux": "3.6.0"
+  },
+  "devDependencies": {
+    "babel-core": "6.18.2",
+    "babel-eslint": "7.0.0",
+    "babel-loader": "6.2.8",
+    "babel-preset-react-app": "1.0.0",
+    "eslint": "3.8.1",
+    "eslint-config-react-app": "0.3.0",
+    "eslint-plugin-flowtype": "2.21.0",
+    "eslint-plugin-import": "2.0.1",
+    "eslint-plugin-jsx-a11y": "2.2.3",
+    "eslint-plugin-react": "6.4.1",
+    "jest": "17.0.3",
+    "webpack": "2.1.0-beta.27"
+  }
+}
