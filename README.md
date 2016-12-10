@@ -3,6 +3,8 @@ React Mirror
 
 > React Mirror is WIP, you can't use it yet
 
+> This guide assumes deep familarity with [Redux](https://github.com/reactjs/redux)
+
 A fractal state tree that wraps your views.
 
 * **Atomicity** - all state lives in one place only
@@ -15,7 +17,7 @@ import React from 'react'
 import Mirror from 'react-mirror'
 
 const Counter = Mirror({
-  reducer: ({value}, {type, payload = 1}) => {
+  reducer: ({value = 0}, {type, payload = 1}) => {
     switch (type) {
       case 'INCREMENT': return {value: value + payload}
       case 'DECREMENT': return {value: value - payload}
@@ -48,36 +50,21 @@ By realizing local stores can be composed just like views & allowing context you
 
 #### `Mirror({reducer, enhancer, middleware, contextSubscribe, contextPublish})`
 
-`reducer` (*Function*):
+Creates a decorator you can pass a component to. The decorated component's props are controlled by the store which can be updated indirectly via actions.
 
-Returns the next state, given the current state, an action & contextual state.
+`reducer(currentState, {type, payload, ...}, context)` (*Function*):
 
-`enhancer` (*Function*):
+Returns the next state, given the current state, an action & contextual state. `context`'s object properties include the state of ancestors picked via `contextSubscribe`.
 
-**Top-level only**. You can use most Redux store enhancers to add third-party capabilities to React Mirror, we have examples for apollo, redux-form, redux-dev-tools, redux-logger & react-router-redux.
+`enhancer()` (*Function*):
 
-`middleware` (*Function | Function[]*):
+**Top-level only**. You can use most Redux store enhancers to add third-party capabilities to React Mirror. See examples for: apollo, redux-form, redux-dev-tools, redux-logger & react-router-redux.
 
+`middleware()` (*Function | Function[]*):
 
-
-`contextSubscribe` (*String | String[]*)
-
-`contextPublish` (*String*)
-
-### Props
-
-### Actions
-
-## How to extend React Mirror
-
-React Mirror uses [redux](https://github.com/reactjs/redux) under the hood, you may optionally provide an `enhancer` to the root `Mirror` component.
-
-Example:
+Middleware can be easily composed across stores on multiple levels. This might be useful for logging only the actions dispatched by a particular view. When actions are dispatched middleware for the root is called first, followed by the middleware of each descendant (stops at the component that dispatched an action).
 
 ```js
-import {applyMiddleware} from 'redux'
-import Mirror from 'react-mirror'
-
 const logger = store => next => action => {
   console.log('dispatching', action)
   let result = next(action)
@@ -85,44 +72,109 @@ const logger = store => next => action => {
   return result
 }
 
-let App = Mirror({
-  enhancer: applyMiddleware(logger)
+const MyComponent = Mirror({
+  middleware: logger
+})(
+  () => { /* ... */ }
+)
+```
+
+`contextSubscribe` (*String | String[]*):
+
+Allows child components to access ancestor state (via props & reducer). Child components can also dispatch actions to thier ancestors.
+
+`contextPublish` (*String*):
+
+Allows all descendants to access a component's state & dispatch actions to the component.
+
+```js
+const Ancestor = Mirror({
+  reducer: (currentState, {type}) => {
+    switch (type) {
+      case 'ACTION_DISPATCHED_BY_DESCENDANT': return /* ... */
+      /* ... */
+    }
+  },
+  contextPublish: 'ancestor'
 })(
   () => { /* ... */ }
 )
 
+const Descendant = Mirror({
+  reducer: (currentState, action, {ancestor}) => { /* ... */ },
+  contextSubscribe: 'ancestor'
+})(
+  ({dispatch, context: {ancestor}, ...state}) => (
+    <div>
+      { /* ... */ }
+      <button
+        onClick={() => dispatch('ACTION_DISPATCHED_BY_DESCENDANT', 'ancestor', null)}
+      >Click me!</button>
+    </div>
+  )
+)
+
 ```
 
-## API reference
+#### Props
 
-`Mirror({reducer, enhancer, contextSubscribe, contextPublish})`
+You can pass `subscribe` to decorated components, this might be useful for reacting to input changes within a form. The decorator passes the reducer state & some props to the wrapped component: `subscribe`, `dispatch` & `context`.
 
-**Arguments**
+`subscribe(action, state, prevState)` (*Function*):
 
-1. `reducer` (*Function*): Returns the next state, given the current state, an action & contextual state.
+Called immediately after reducer handles action & before component renders. Useful for running side-effects in response to actions. Subscriptions are automatically cancelled when the component unmounts, but you can unsubscribe earlier by calling the function returned by `subscribe`. I suggest creating subscriptions inside `componentWillMount`.
 
-2. `enhancer` (*Function*): Enhances the store with third-party capabilities such as middleware.
+```js
+const Input = Mirror({ /* ... */ })(() => { /* ... */ })
 
-3. `contextSubscribe` (*Array[String]*): List of ancestors component reads state from.
+const Form = () => (
+  <form>
+    <Input subscribe((action, {value}) => console.log(`New input value: ${value}`)) />
+  </form>
+)
+```
 
-4. `contextPublish` (*String*): Allows descendents to read state & dispatch actions to component.
+```js
+const MyComponent = Mirror({ /* ... */ })(
+  React.createClass({
+    componentWillMount() {
+      this.unsubscribe = this.props.subscribe((action, state, prevState) => { /* ... */ })
+    },
+    render() { /* ... */ },
+  })
+)
+```
 
-**Props**
+`dispatch(type, [context], [payload], [metadata]) | ({type, payload, ...metadata}, [context])` (*Function*):
 
-1. `subscribe` (*Function*): Optionally supplied by parent component & callable by child (best done inside `constructor` life-cycle method), accepts a listener which in turn accepts `action`, `state` & `prevState`.
+Calls the reducer with an action. If `context` is undefined the action is dispatched to the local store.
 
-2. `dispatch` (*Function*)
+`context` (*Object*):
 
-**Actions**
+`context`'s object properties include the state of ancestors picked via `contextSubscribe`.
 
-1. `INITIALIZE`
+#### Actions
 
-2. `UPDATE_PROPS`
+`INITIALIZE(props)`:
 
-3. `UNMOUNT_COMPONENT`
+Called before component mounts with initial props. All props are intercepted by the store, you'll need to return them from the reducer to access parent props.
 
-## vs Redux
+`UPDATE_PROPS(nextProps)`:
 
-## vs this.setState
+Called when parent updates child props. Parents cannot freely update wrapped child props, you'll need to return the updated state from the reducer for prop changes to have any effect.
 
-## vs Cycle.js onionify
+`UNMOUNT_COMPONENT()`:
+
+Called before child unmounts.
+
+## Examples
+
+## Caveats
+
+## Thanks
+
+React Mirror was inspired by [Cycle.js onionify](https://github.com/staltz/cycle-onionify), [Redux](https://github.com/reactjs/redux) & the [Controller View](http://blog.andrewray.me/the-reactjs-controller-view-pattern/) [pattern](https://facebook.github.io/flux/docs/todo-list.html#listening-to-changes-with-a-controller-view).
+
+## License
+
+ISC
