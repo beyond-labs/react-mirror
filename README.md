@@ -1,7 +1,7 @@
 React Mirror
 ============
 
-> React Mirror is WIP, you can't use it yet
+> React Mirror is WIP, for testing only
 
 > This guide assumes deep familarity with [Redux](https://github.com/reactjs/redux)
 
@@ -48,9 +48,11 @@ By realizing local stores can be composed just like views & allowing context you
 
 ## Usage
 
-#### `Mirror({reducer, enhancer, middleware, contextSubscribe, contextPublish})`
+#### `Mirror(config, options)`
 
 Creates a decorator you can pass a component to. The decorated component's props are controlled by the store which can be updated indirectly via actions.
+
+##### `config`
 
 `reducer(currentState, {type, payload, ...}, context)` (*Function*):
 
@@ -116,6 +118,25 @@ const Descendant = Mirror({
 
 ```
 
+##### `options`
+
+`pure` (*Boolean|Function*):
+
+If `true`, `Mirror` will avoid re-renders if, after dispatching an action, the following equality check returns `true`:
+
+```js
+const pure = (state, prevState) => {
+  if (!shallowEqual(state, prevState)) return true
+  if (state.context) {
+    for (key in state.context) {
+      if (!shallowEqual(state.context[key], prevState.context[key])) return true
+    }
+  }
+}
+```
+
+You can use your own equality check by providing a function. Default value: `true`.
+
 #### Props
 
 You can pass `subscribe` to decorated components, this might be useful for reacting to input changes within a form. The decorator passes the reducer state & some props to the wrapped component: `subscribe`, `dispatch` & `context`.
@@ -163,18 +184,33 @@ Called before component mounts with initial props. All props are intercepted by 
 
 Called when parent updates child props. Parents cannot freely update wrapped child props, you'll need to return the updated state from the reducer for prop changes to have any effect.
 
+`UPDATE_CONTEXT(updatedContextName)`:
+
+Called immediately after parent reducer handles action & before rendering.
+
 `UNMOUNT_COMPONENT()`:
 
 Called before child unmounts.
 
 ## Examples
 
+* Rehydrate state
+* Access wrapped component
+
+**Integrations**
+
 ## Caveats
+
+* Unstructured state
+
+* Cannot change macro-structure of state
+
+* Parents cannot directly update child props
+
+If you have a potential solution to any of these open an issue & we can discuss it.
 
 ## Thanks
 
 React Mirror was inspired by [Cycle.js onionify](https://github.com/staltz/cycle-onionify), [Redux](https://github.com/reactjs/redux) & the [Controller View](http://blog.andrewray.me/the-reactjs-controller-view-pattern/) [pattern](https://facebook.github.io/flux/docs/todo-list.html#listening-to-changes-with-a-controller-view).
 
-## License
-
-ISC
+> [Share React Mirror on Twitter](https://twitter.com/?status=Cool%20state%20management%20library%3A%20https%3A//github.com/ashtonwar/react-mirror) if you like it

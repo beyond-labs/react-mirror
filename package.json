@@ -22,10 +22,13 @@
     "prebuild": "rimraf build",
     "build": "set NODE_ENV=production&& webpack",
     "postbuild": "git add . --all",
-    "start": "jest --watch"
+    "start": "jest --watch",
+    "test": "jest"
   },
   "dependencies": {
-    "redux": "3.6.0"
+    "lodash": "4.17.3",
+    "react": "^15.4.0",
+    "redux": "^3.6.0"
   },
   "devDependencies": {
     "babel-core": "6.18.2",

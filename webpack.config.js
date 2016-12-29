@@ -7,8 +7,8 @@ const config = {
   entry: './src/index',
   output: {
     filename: 'index.js',
-    path: __dirname + '/build', // eslint-disable-line prefer-template
-    library: 'brick-lane',
+    path: __dirname,
+    library: 'react-mirror',
     libraryTarget: 'umd',
   },
   target: 'node',
