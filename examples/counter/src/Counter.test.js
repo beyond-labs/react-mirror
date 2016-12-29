@@ -8,7 +8,8 @@ it('renders without crashing', () => {
 })
 
 it('has a displayName', () => {
-  expect((<Counter />).displayName).toEqual('Mirror(Counter)')
+  const instance = mount(<Counter />).getNode()
+  expect(instance.constructor.displayName).toEqual('Mirror(Counter)')
 })
 
 it('updates the state', () => {
@@ -43,14 +44,14 @@ it('updates multiple counters independently', () => {
     )
   )
   const wrapper = mount(<MyComponent />)
-  const simulate = (id, button) => wrapper.find({id}).find({name: button}).simulate('click')
-  const value = (id) => wrapper.find({id}).find('.value').text()
+  const simulate = (id, button) => wrapper.findWhere(node => node.prop('id') === id).find({name: button}).simulate('click')
+  const value = (id) => wrapper.findWhere(node => node.prop('id') === id).find('.value').text()
   expect(value('1')).toEqual('Value: 0')
   expect(value('2')).toEqual('Value: 0')
-  simulate('1', 'INCREMENT')
+  simulate('1', 'increment')
   expect(value('1')).toEqual('Value: 1')
   expect(value('2')).toEqual('Value: 0')
-  simulate('2', 'DECREMENT')
+  simulate('2', 'decrement')
   expect(value('1')).toEqual('Value: 1')
   expect(value('2')).toEqual('Value: -1')
 })
