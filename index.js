@@ -1455,7 +1455,9 @@ var Mirror = exports.Mirror = function Mirror() {
         _this.localStore = (0, _createLocalStore2.default)(_this, config, options);
         _this.localStore.subscribeParent(props.subscribe);
         _this.localStore.subscribe(function (action, state) {
-          return _this.setState({ state: state, context: _this.localStore.getStateContext() });
+          if (!['INITIALIZE', 'UNMOUNT_COMPONENT'].includes(action.type)) {
+            _this.setState({ state: state, context: _this.localStore.getStateContext() });
+          }
         });
         _this.localStore.dispatch('INITIALIZE', (0, _omit3.default)(props, 'subscribe'));
         _this.state = { state: _this.localStore.getState(), context: _this.localStore.getStateContext() };

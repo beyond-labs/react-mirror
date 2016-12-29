@@ -43,7 +43,11 @@ export const Mirror = (config = {}, options = {}) => {
         }
         this.localStore = createLocalStore(this, config, options)
         this.localStore.subscribeParent(props.subscribe)
-        this.localStore.subscribe((action, state) => this.setState({state, context: this.localStore.getStateContext()}))
+        this.localStore.subscribe((action, state) => {
+          if (!['INITIALIZE', 'UNMOUNT_COMPONENT'].includes(action.type)) {
+            this.setState({state, context: this.localStore.getStateContext()})
+          }
+        })
         this.localStore.dispatch('INITIALIZE', _.omit(props, 'subscribe'))
         this.state = {state: this.localStore.getState(), context: this.localStore.getStateContext()}
       }
