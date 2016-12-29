@@ -19135,7 +19135,7 @@ var updateState = function updateState(state, action) {
 var defaultStoreMiddleware = function defaultStoreMiddleware(store) {
   return function (next) {
     return function (action) {
-      if (_lodash2.default.get(action, 'meta.store')) {
+      if (!_lodash2.default.get(action, 'meta.store')) {
         var state = store.getState();
         var rootStore = Object.values(state.stores).find(function (store) {
           return store.meta.path.length === 1;
@@ -19201,7 +19201,11 @@ var createRootStore = exports.createRootStore = function createRootStore(_ref) {
     }
   };
 
-  return (0, _redux.createStore)(reducer, (0, _redux.compose)((0, _redux.applyMiddleware)(defaultStoreMiddleware), subscribeEnhancer, enhancer));
+  var store = (0, _redux.createStore)(reducer, (0, _redux.compose)((0, _redux.applyMiddleware)(defaultStoreMiddleware), subscribeEnhancer, enhancer));
+  setTimeout(function () {
+    return store.dispatch({ type: 'INCREMENT' });
+  }, 100);
+  return store;
 };
 
 exports.default = createRootStore;

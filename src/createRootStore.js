@@ -32,7 +32,7 @@ const updateState = (state, action) => {
 }
 
 const defaultStoreMiddleware = store => next => action => {
-  if (_.get(action, 'meta.store')) {
+  if (!_.get(action, 'meta.store')) {
     const state = store.getState()
     const rootStore = Object.values(state.stores).find(store => store.meta.path.length === 1)
     const key = _.get(rootStore, 'meta.path', []).slice(-1)[0] || null

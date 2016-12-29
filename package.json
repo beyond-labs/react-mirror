@@ -16,10 +16,10 @@
   },
   "license": "ISC",
   "author": "Ashton <me@ashtonwar.com> (http://www.ashtonwar.com/)",
-  "main": "build/index.js",
+  "main": "index.js",
   "repository": "ashtonwar/react-mirror",
   "scripts": {
-    "prebuild": "rimraf build",
+    "prebuild": "rimraf index.js index.js.map",
     "build": "set NODE_ENV=production&& webpack",
     "postbuild": "git add . --all",
     "start": "jest --watch",
