@@ -1616,12 +1616,17 @@ var dispatch = function dispatch(instance) {
 };
 
 var createLocalStore = exports.createLocalStore = function createLocalStore(instance, config, options) {
-  var reducer = config.reducer;
-  var middleware = config.middleware;
+  var _config$reducer = config.reducer;
+  var reducer = _config$reducer === undefined ? function (state) {
+    return state;
+  } : _config$reducer;
+  var _config$middleware = config.middleware;
+  var middleware = _config$middleware === undefined ? [] : _config$middleware;
   var _config$contextSubscr = config.contextSubscribe;
   var contextSubscribe = _config$contextSubscr === undefined ? [] : _config$contextSubscr;
   var contextPublish = config.contextPublish;
 
+  if (typeof middleware === 'function') middleware = [middleware];
   if (typeof contextSubscribe === 'string') contextSubscribe = [contextSubscribe];
   var _options$pure = options.pure;
   var pure = _options$pure === undefined ? true : _options$pure;

@@ -4,10 +4,12 @@ import Counter from './Counter'
 import Mirror from '../../../index'
 
 const MyComponent = Mirror()(
-  <div>
-    <Counter id='1' />
-    <Counter id='2' />
-  </div>
+  () => (
+    <div>
+      <Counter />
+      <Counter />
+    </div>
+  )
 )
 
 ReactDOM.render(

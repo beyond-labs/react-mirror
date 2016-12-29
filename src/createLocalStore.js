@@ -39,7 +39,8 @@ const dispatch = (instance) => (...args) => {
 }
 
 export const createLocalStore = (instance, config, options) => {
-  let {reducer, middleware, contextSubscribe = [], contextPublish} = config
+  let {reducer = state => state, middleware = [], contextSubscribe = [], contextPublish} = config
+  if (typeof middleware === 'function') middleware = [middleware]
   if (typeof contextSubscribe === 'string') contextSubscribe = [contextSubscribe]
   const {pure = true} = options
   const {rootStore, path} = instance

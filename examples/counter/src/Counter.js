@@ -10,13 +10,15 @@ export const Counter = Mirror({
     }
   }
 })(
-  ({value, dispatch}) => (
-    <div>
-      <span className='value'>Value: {value}</span>
-      <button name='increment' onClick={() => dispatch('INCREMENT')}>+</button>
-      <button name='decrement' onClick={() => dispatch('DECREMENT')}>-</button>
-    </div>
-  )
+  function Counter({value, dispatch}) {
+    return (
+      <div>
+        <span className='value'>Value: {value}</span>
+        <button name='increment' onClick={() => dispatch('INCREMENT')}>+</button>
+        <button name='decrement' onClick={() => dispatch('DECREMENT')}>-</button>
+      </div>
+    )
+  }
 )
 
 export default Counter

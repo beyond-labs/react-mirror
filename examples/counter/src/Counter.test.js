@@ -7,6 +7,10 @@ it('renders without crashing', () => {
   mount(<Counter />)
 })
 
+it('has a displayName', () => {
+  expect((<Counter />).displayName).toEqual('Mirror(Counter)')
+})
+
 it('updates the state', () => {
   const wrapper = mount(<Counter />)
   const value = () => wrapper.getNode().localStore.getState().value
@@ -31,10 +35,12 @@ it('updates the counter', () => {
 
 it('updates multiple counters independently', () => {
   const MyComponent = Mirror()(
-    <div>
-      <Counter id='1' />
-      <Counter id='2' />
-    </div>
+    () => (
+      <div>
+        <Counter id='1' />
+        <Counter id='2' />
+      </div>
+    )
   )
   const wrapper = mount(<MyComponent />)
   const simulate = (id, button) => wrapper.find({id}).find({name: button}).simulate('click')
