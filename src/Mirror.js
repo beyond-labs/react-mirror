@@ -45,7 +45,6 @@ export const Mirror = (config = {}, options = {}) => {
         this.localStore.subscribeParent(props.subscribe)
         this.localStore.subscribe((action, state) => {
           if (!['INITIALIZE', 'UNMOUNT_COMPONENT'].includes(action.type)) {
-            console.log(`setState @ ${this.constructor.displayName}, state:`, state)
             const context = this.localStore.getStateContext()
             this.setState({state, context})
           }
@@ -57,9 +56,10 @@ export const Mirror = (config = {}, options = {}) => {
         return {rootStore: this.rootStore, path: this.path}
       }
       shouldComponentUpdate(nextProps, nextState) {
-        console.log(`shouldComponentUpdate @ ${this.constructor.displayName}, state:`, nextState.state)
-        this.localStore.subscribeParent(nextProps.subscribe)
-        this.localStore.dispatch('UPDATE_PROPS', _.omit(nextProps, 'subscribe'))
+        if (nextProps !== this.props) {
+          this.localStore.subscribeParent(nextProps.subscribe)
+          setTimeout(() => this.localStore.dispatch('UPDATE_PROPS', _.omit(nextProps, 'subscribe')))
+        }
         return nextState !== this.state
       }
       componentWillUnmount() {

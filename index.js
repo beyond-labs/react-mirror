@@ -1288,7 +1288,6 @@ var Mirror = exports.Mirror = function Mirror() {
         _this.localStore.subscribeParent(props.subscribe);
         _this.localStore.subscribe(function (action, state) {
           if (!['INITIALIZE', 'UNMOUNT_COMPONENT'].includes(action.type)) {
-            console.log('setState @ ' + _this.constructor.displayName + ', state:', state);
             var _context = _this.localStore.getStateContext();
             _this.setState({ state: state, context: _context });
           }
@@ -1306,9 +1305,14 @@ var Mirror = exports.Mirror = function Mirror() {
       }, {
         key: 'shouldComponentUpdate',
         value: function shouldComponentUpdate(nextProps, nextState) {
-          console.log('shouldComponentUpdate @ ' + this.constructor.displayName + ', state:', nextState.state);
-          this.localStore.subscribeParent(nextProps.subscribe);
-          this.localStore.dispatch('UPDATE_PROPS', (0, _omit3.default)(nextProps, 'subscribe'));
+          var _this2 = this;
+
+          if (nextProps !== this.props) {
+            this.localStore.subscribeParent(nextProps.subscribe);
+            setTimeout(function () {
+              return _this2.localStore.dispatch('UPDATE_PROPS', (0, _omit3.default)(nextProps, 'subscribe'));
+            });
+          }
           return nextState !== this.state;
         }
       }, {
