@@ -1263,8 +1263,6 @@ var Mirror = exports.Mirror = function Mirror() {
     // TODO: throw if:
     // WrappedComponent is not a component
 
-    var _setStateFailed = false;
-
     var Mirror = function (_Component) {
       (0, _inherits3.default)(Mirror, _Component);
 
@@ -1290,20 +1288,9 @@ var Mirror = exports.Mirror = function Mirror() {
         _this.localStore.subscribeParent(props.subscribe);
         _this.localStore.subscribe(function (action, state) {
           if (!['INITIALIZE', 'UNMOUNT_COMPONENT'].includes(action.type)) {
-            (function () {
-              console.group('this.setState @ ' + _this.constructor.displayName + ', state:');
-              console.log(state);
-              console.groupEnd();
-              var context = _this.localStore.getStateContext();
-              _this.setState({ state: state, context: context }, function () {
-                if (_this.state.state !== state || _this.state.context !== context) {
-                  setTimeout(function () {
-                    _setStateFailed = true;
-                    _this.setState({ state: state, context: context });
-                  });
-                }
-              });
-            })();
+            console.log('setState @ ' + _this.constructor.displayName + ', state:', state);
+            var _context = _this.localStore.getStateContext();
+            _this.setState({ state: state, context: _context });
           }
         });
         _this.localStore.dispatch('INITIALIZE', (0, _omit3.default)(props, 'subscribe'));
@@ -1319,10 +1306,9 @@ var Mirror = exports.Mirror = function Mirror() {
       }, {
         key: 'shouldComponentUpdate',
         value: function shouldComponentUpdate(nextProps, nextState) {
-          if (_setStateFailed) _setStateFailed = false;else {
-            this.localStore.subscribeParent(nextProps.subscribe);
-            this.localStore.dispatch('UPDATE_PROPS', (0, _omit3.default)(nextProps, 'subscribe'));
-          }
+          console.log('shouldComponentUpdate @ ' + this.constructor.displayName + ', state:', nextState.state);
+          this.localStore.subscribeParent(nextProps.subscribe);
+          this.localStore.dispatch('UPDATE_PROPS', (0, _omit3.default)(nextProps, 'subscribe'));
           return nextState !== this.state;
         }
       }, {
