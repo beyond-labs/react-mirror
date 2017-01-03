@@ -20,6 +20,8 @@ export const Mirror = (config = {}, options = {}) => {
     // TODO: throw if:
     // WrappedComponent is not a component
 
+    let _setStateFailed = false
+
     class Mirror extends Component {
       path: null
       rootStore: null
@@ -33,19 +35,30 @@ export const Mirror = (config = {}, options = {}) => {
         // OR getWrappedInstance is called & wrapped component is pure
         super()
         const key = Math.random().toString().slice(2)
-        if (!context.store) {
+        if (!context.rootStore) {
           this.rootStore = createRootStore({enhancer})
           this.path = [key]
         }
         else {
-          this.rootStore = context.store
+          this.rootStore = context.rootStore
           this.path = context.path.concat(key)
         }
         this.localStore = createLocalStore(this, config, options)
         this.localStore.subscribeParent(props.subscribe)
         this.localStore.subscribe((action, state) => {
           if (!['INITIALIZE', 'UNMOUNT_COMPONENT'].includes(action.type)) {
-            this.setState({state, context: this.localStore.getStateContext()})
+            console.group(`this.setState @ ${this.constructor.displayName}, state:`)
+            console.log(state)
+            console.groupEnd()
+            const context = this.localStore.getStateContext()
+            this.setState({state, context}, () => {
+              if (this.state.state !== state || this.state.context !== context) {
+                setTimeout(() => {
+                  _setStateFailed = true
+                  this.setState({state, context})
+                })
+              }
+            })
           }
         })
         this.localStore.dispatch('INITIALIZE', _.omit(props, 'subscribe'))
@@ -55,9 +68,12 @@ export const Mirror = (config = {}, options = {}) => {
         return {rootStore: this.rootStore, path: this.path}
       }
       shouldComponentUpdate(nextProps, nextState) {
-        if (nextState !== this.state) return true
-        this.localStore.subscribeParent(nextProps.subscribe)
-        this.localStore.dispatch('UPDATE_PROPS', _.omit(nextProps, 'subscribe'))
+        if (_setStateFailed) _setStateFailed = false
+        else {
+          this.localStore.subscribeParent(nextProps.subscribe)
+          this.localStore.dispatch('UPDATE_PROPS', _.omit(nextProps, 'subscribe'))
+        }
+        return nextState !== this.state
       }
       componentWillUnmount() {
         this.localStore.dispatch('UNMOUNT_COMPONENT')
@@ -91,7 +107,6 @@ export const Mirror = (config = {}, options = {}) => {
 
     return Mirror
   }
-
 }
 
 export default Mirror

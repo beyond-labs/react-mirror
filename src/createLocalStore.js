@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import setPure from './utils/setPure'
 import shallowEqual from './utils/shallowEqual'
 import subNamesToKeys from './utils/subNamesToKeys'
 import normalizeState from './utils/normalizeState'
@@ -22,10 +23,10 @@ const _dispatch = (action = {}, context, instance) => {
   let store = key
   if (context) {
     const candidates = instance.path.map(key => instance.rootStore.getState().stores[key])
-    store = candidates.reverse().find(store => store.meta.contextPublish === context).key
+    store = candidates.reverse().find(store => store.meta.contextPublish === context).meta.path.slice(-1)[0]
   }
-  action = _.set(action, 'meta.store', store)
-  action = _.set(action, 'meta.origin', key)
+  action = setPure(action, 'meta.store', store)
+  action = setPure(action, 'meta.origin', key)
   instance.rootStore.dispatch(action)
 }
 
@@ -48,7 +49,7 @@ export const createLocalStore = (instance, config, options) => {
   rootStore.dispatch({
     type: '@@mirror/ADD_STORE',
     payload: {
-      path, name: instance.displayName || instance.name, instance,
+      path, name: instance.constructor.displayName, instance,
       reducer, middleware, contextSubscribe, contextPublish
     }
   })
@@ -66,7 +67,7 @@ export const createLocalStore = (instance, config, options) => {
       return cancel
     },
     subscribeParent: (f = () => {}) => {
-      const cancel = () => subscriptions = subscriptions.filter(({id}) => id === 'parent')
+      const cancel = () => subscriptions = subscriptions.filter(({id}) => id !== 'parent')
       cancel()
       subscriptions.push({f, cancel, id: 'parent'})
     },
@@ -76,6 +77,7 @@ export const createLocalStore = (instance, config, options) => {
   const contextSubscribeKeys = subNamesToKeys(contextSubscribe, path, rootStore.getState())
   const cancelRootSubscription =
     rootStore.subscribe((storeUpdated, action, rootState, rootPrevState) => {
+      if (['@@mirror/ADD_STORE', '@@mirror/REMOVE_STORE'].includes(action.type)) return
       const {state, context} = normalizeState(contextSubscribe, path, rootState)
       const {state: prevState, context: prevContext} = normalizeState(contextSubscribe, path, rootPrevState)
       _state = state

@@ -1,10 +1,11 @@
 import _ from 'lodash'
-import {createStore as createReduxStore, compose, applyMiddleware} from 'redux'
+import setPure from './utils/setPure'
 import normalizeState from './utils/normalizeState'
+import {createStore as createReduxStore, compose, applyMiddleware} from 'redux'
 
 const addStore = (state, store) => {
   const key = store.path.slice(-1)[0]
-  state = _.set(state, ['stores', key], {meta: store, state: {}})
+  state = setPure(state, ['stores', key], {meta: store, state: {}})
   return state
 }
 
@@ -21,7 +22,7 @@ const updateState = (state, action) => {
   const key = store.meta.path.slice(-1)[0]
   const {context} = normalizeState(store.meta.contextSubscribe, store.meta.path, state)
   const nextState = store.meta.reducer(store.state, action, context)
-  state = _.set(state, ['stores', key, 'state'], nextState)
+  state = setPure(state, ['stores', key, 'state'], nextState)
 
   const isRoot = store.meta.path.length === 1
   if (isRoot) {
@@ -36,7 +37,7 @@ const defaultStoreMiddleware = store => next => action => {
     const state = store.getState()
     const rootStore = Object.values(state.stores).find(store => store.meta.path.length === 1)
     const key = _.get(rootStore, 'meta.path', []).slice(-1)[0] || null
-    action = _.set(action, 'meta.store', key)
+    action = setPure(action, 'meta.store', key)
   }
   return next(action)
 }
