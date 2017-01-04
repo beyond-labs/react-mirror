@@ -1,4 +1,4 @@
-# Counter Example
+# BMI Calculator Example
 
 ## Run locally
 
@@ -6,7 +6,7 @@
 git clone https://github.com/ashtonwar/react-mirror.git
 cd react-mirror
 yarn install
-cd examples/counter
+cd examples/BMICalculator
 yarn install
 yarn start
 ```
