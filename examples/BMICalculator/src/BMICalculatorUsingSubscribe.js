@@ -13,7 +13,16 @@ const Input = Mirror({
   }
 }, {pure: false})(
   function Input({dispatch, subscribe, context, ...props}) {
-    return <input {...props} onChange={e => dispatch('CHANGE', _.pick(e.target, ['value', 'checked', 'name']))} />
+    return (
+      <input
+        type='range' {...props}
+        onChange={e => {
+          e = _.pick(e.target, ['value', 'name'])
+          e.value = Number(e.value)
+          dispatch('CHANGE', e)
+        }}
+      />
+    )
   }
 )
 
@@ -27,20 +36,21 @@ export const BMICalculatorUsingSubscribe = Mirror({
   },
 })(
   function BMICalculatorUsingSubscribe({dispatch, weight, height}) {
-    const BMI = Math.round(Number(weight) / ((Number(height) * 0.01) ** 2))
+    const BMI = Math.round(weight / ((height * 0.01) ** 2))
     const subscribe = ({type, payload}, {name}) => {
       if (type === 'CHANGE') dispatch('CHANGE', {...payload})
     }
     return (
       <div>
+        Subscribe<br />
         <span className='value'>BMI: {BMI}</span>
         <label>
-          Weight (kg)
-          <Input name='weight' type='number' subscribe={subscribe} value={weight} min={40} max={140} />
+          Weight ({weight} kg)
+          <Input name='weight' subscribe={subscribe} value={weight} min={40} max={140} />
         </label>
         <label>
-          Height (cm)
-          <Input name='height' type='number' subscribe={subscribe} value={height} min={140} max={210} />
+          Height ({height} cm)
+          <Input name='height' subscribe={subscribe} value={height} min={140} max={210} />
         </label>
       </div>
     )

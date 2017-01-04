@@ -1,9 +1,11 @@
+import './index.css'
 import _ from 'lodash'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import {applyMiddleware, compose} from 'redux'
 import createLogger from 'redux-logger'
 import BMICalculatorUsingContext from './BMICalculatorUsingContext'
+import BMICalculatorUsingSubscribe from './BMICalculatorUsingSubscribe'
 import Mirror from '../../../index'
 
 const logger = createLogger({
@@ -27,8 +29,8 @@ const MyComponent = Mirror({
   () => (
     <div>
       <BMICalculatorUsingContext />
-      {/* <hr />
-      <BMICalculatorUsingSubscribe /> */}
+      <hr />
+      <BMICalculatorUsingSubscribe />
     </div>
   )
 )
