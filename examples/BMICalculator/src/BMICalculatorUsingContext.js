@@ -12,10 +12,10 @@ const Input = Mirror({
   },
   contextSubscribe: 'BMICalculator'
 })(
-  function Input({dispatch, subscribe, context, name, ...props}) {
+  function Input({dispatch, subscribe, context, ...props}) {
     return (
       <input
-        type='range' name={name} value={context.BMICalculator[name]} {...props}
+        type='range' value={context.BMICalculator[props.name]} {...props}
         onChange={e => {
           e = _.pick(e.target, ['value', 'name'])
           e.value = Number(e.value)
