@@ -1,8 +1,6 @@
 React Mirror
 ============
 
-> React Mirror is WIP, for testing only
-
 > This guide assumes deep familarity with [Redux](https://github.com/reactjs/redux)
 
 A fractal state tree that wraps your views.
@@ -60,26 +58,7 @@ Returns the next state, given the current state, an action & contextual state. `
 
 `enhancer()` (*Function*):
 
-**Top-level only**. You can use most Redux store enhancers to add third-party capabilities to React Mirror. See examples for: apollo, redux-form, redux-dev-tools, redux-logger & react-router-redux.
-
-`middleware()` (*Function | Function[]*):
-
-Middleware can be easily composed across stores on multiple levels. This might be useful for logging only the actions dispatched by a particular view. When actions are dispatched middleware for the root is called first, followed by the middleware of each descendant (stops at the component that dispatched an action).
-
-```js
-const logger = store => next => action => {
-  console.log('dispatching', action)
-  let result = next(action)
-  console.log('next state', store.getState())
-  return result
-}
-
-const MyComponent = Mirror({
-  middleware: logger
-})(
-  () => { /* ... */ }
-)
-```
+**Top-level only**. You can use most Redux store enhancers to add third-party capabilities to React Mirror.
 
 `contextSubscribe` (*String | String[]*):
 
@@ -115,7 +94,6 @@ const Descendant = Mirror({
     </div>
   )
 )
-
 ```
 
 ##### `options`
@@ -192,20 +170,22 @@ Called immediately after parent reducer handles action & before rendering.
 
 Called before child unmounts.
 
-## Examples
-
-* Rehydrate state
-* Access wrapped component
-
-**Integrations**
-
 ## Caveats
 
-* Unstructured state
+React Mirror isn't complete yet. & some of this functionality may be essential for your use case. For example:
 
-* Cannot change macro-structure of state
+* Store IDs are non-deterministic. This makes state rehydration much harder, & snapshot testing slightly harder.
+* No API exists for accessing the wrapped component.
+* Root store isn't destroyed when top-level component unmounts.
+* Ancestors cannot dispatch actions to children. Not architectually sound, but escape hatch should be available.
+* Cannot add middleware to child stores.
+* Cannot access instance inside `pure` / `reducer`.
+* No interface exists for selectors
 
-* Parents cannot directly update child props
+Additionally:
+
+* Parents cannot directly update child props.
+* Root state changes as stores are added / removed & may be tricky to debug.
 
 If you have a potential solution to any of these open an issue & we can discuss it.
 
