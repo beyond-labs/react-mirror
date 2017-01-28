@@ -1,8 +1,10 @@
 import _ from 'lodash'
+import invariant from 'invariant'
 import setPure from './utils/setPure'
 import shallowEqual from './utils/shallowEqual'
 import subNamesToKeys from './utils/subNamesToKeys'
 import normalizeState from './utils/normalizeState'
+import findStoreByContext from './utils/findStoreByContext'
 
 const shouldUpdate = (pure, storeUpdated, subscribedTo, state, prevState) => {
   if (!subscribedTo.some((key) => key === storeUpdated)) return false
@@ -17,16 +19,20 @@ const shouldUpdate = (pure, storeUpdated, subscribedTo, state, prevState) => {
 }
 
 const _dispatch = (action = {}, context, instance) => {
-  // TODO: throw if:
-  // store from context not found
-  const key = instance.path.slice(-1)[0]
-  let store = key
+  const originKey = instance.path.slice(-1)[0]
+  let storeKey = originKey
   if (context) {
-    const candidates = instance.path.map(key => instance.rootStore.getState().stores[key])
-    store = candidates.reverse().find(store => store.meta.contextPublish === context).meta.path.slice(-1)[0]
+    const store = findStoreByContext(instance, context)
+    invariant(store,
+      `Could not find "${context}" among the ancestors of ` +
+      `"${instance.constructor.displayName}". ` +
+      'Check you passed the correct value to dispatch and ' +
+      `passed "${context}" to contextPublish for a parent store.`
+    )
+    storeKey = store.meta.path.slice(-1)[0]
   }
-  action = setPure(action, 'meta.store', store)
-  action = setPure(action, 'meta.origin', key)
+  action = setPure(action, 'meta.store', storeKey)
+  action = setPure(action, 'meta.origin', originKey)
   instance.rootStore.dispatch(action)
 }
 
@@ -59,8 +65,9 @@ export const createLocalStore = (instance, config, options) => {
   const store = {
     dispatch: dispatch(instance),
     subscribe: f => {
-      // TODO: throw if:
-      // f is not a function
+      invariant(typeof f === 'function',
+        `You must pass a function to subscribe (${instance.constructor.displayName})`
+      )
       const _id = Math.random().toString().slice(2)
       const cancel = () => subscriptions = subscriptions.filter(({id}) => id === _id)
       subscriptions.push({f, cancel, id: _id})

@@ -1,7 +1,9 @@
 import _ from 'lodash'
+import invariant from 'invariant'
 import {Component, PropTypes, createElement} from 'react'
 import createRootStore from './createRootStore'
 import createLocalStore from './createLocalStore'
+import findStoreByContext from './utils/findStoreByContext'
 
 const getDisplayName = (WrappedComponent) => {
   return WrappedComponent.displayName || WrappedComponent.name || 'Component'
@@ -17,8 +19,11 @@ export const Mirror = (config = {}, options = {}) => {
   const {enhancer} = config
 
   return function wrapWithMirror(WrappedComponent) {
-    // TODO: throw if:
-    // WrappedComponent is not a component
+    invariant(
+      typeof WrappedComponent === 'function',
+      'You must pass a component to the function returned by ' +
+      `Mirror. Instead received ${JSON.stringify(WrappedComponent)}`
+    )
 
     class Mirror extends Component {
       path: null
@@ -28,9 +33,7 @@ export const Mirror = (config = {}, options = {}) => {
       replaceKey: () => {}
       constructor(props, context) {
         // TODO: throw if:
-        // enhancer provided to non top-level component
-        // OR store from contextSubscribe not found
-        // OR getWrappedInstance is called & wrapped component is pure
+        // getWrappedInstance is called & wrapped component is pure
         super()
         const key = Math.random().toString().slice(2)
         if (!context.rootStore) {
@@ -38,9 +41,21 @@ export const Mirror = (config = {}, options = {}) => {
           this.path = [key]
         }
         else {
+          invariant(!enhancer,
+            'You can only pass an enhancer to the top-level store'
+          )
           this.rootStore = context.rootStore
           this.path = context.path.concat(key)
         }
+        (props.contextSubscribe || []).forEach(context => {
+          const store = findStoreByContext(this, context)
+          invariant(store,
+            `Could not find "${context}" among the ancestors of ` +
+            `"${this.constructor.displayName}". ` +
+            'Check you passed the correct value to contextSubscribe and ' +
+            `passed "${context}" to contextPublish for a parent store.`
+          )
+        })
         this.localStore = createLocalStore(this, config, options)
         this.localStore.subscribeParent(props.subscribe)
         this.localStore.subscribe((action, state) => {

@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import invariant from 'invariant'
 import setPure from './utils/setPure'
 import normalizeState from './utils/normalizeState'
 import {createStore as createReduxStore, compose, applyMiddleware} from 'redux'
@@ -15,10 +16,12 @@ const removeStore = (state, key) => {
 }
 
 const updateState = (state, action) => {
-  // TODO: throw if:
-  // dispatching to non-existent store (probably removed before dispatch)
   if (!_.get(action, 'meta.store')) return state
   const store = state.stores[action.meta.store]
+  invariant(store,
+    `The store you're dispatching an action (${action.type}) ` +
+    'to doesn\'t exist any more.'
+  )
   const key = store.meta.path.slice(-1)[0]
   const {context} = normalizeState(store.meta.contextSubscribe, store.meta.path, state)
   const nextState = store.meta.reducer(store.state, action, context)
