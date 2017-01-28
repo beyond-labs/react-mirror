@@ -26,8 +26,8 @@
     "test": "jest"
   },
   "dependencies": {
-    "invariant": "^2.2.2",
-    "lodash": "4.17.3"
+    "invariant": "^2.2.0",
+    "lodash": "^4.17.0"
   },
   "peerDependencies": {
     "react": "^15.4.0",
