@@ -44,7 +44,7 @@ export const BMICalculatorUsingSubscribe = Mirror({
     }
   }
 })(function BMICalculatorUsingSubscribe({dispatch, weight, height}) {
-  const BMI = Math.round(weight / (height * (0.01 ** 2)));
+  const BMI = Math.round(weight / Math.pow(height * 0.01, 2));
   const subscribe = ({type, payload}, {name}) => {
     if (type === 'CHANGE') dispatch('CHANGE', {...payload});
   };

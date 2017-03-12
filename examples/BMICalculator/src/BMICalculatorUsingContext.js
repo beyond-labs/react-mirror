@@ -42,7 +42,7 @@ export const BMICalculatorUsingContext = Mirror({
   },
   contextPublish: 'BMICalculator'
 })(function BMICalculatorUsingContext({weight, height}) {
-  const BMI = Math.round(weight / (height * 0.01 ** 2));
+  const BMI = Math.round(weight / Math.pow(height * 0.01, 2));
   return (
     <div>
       Context<br />
