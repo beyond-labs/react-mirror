@@ -52,9 +52,9 @@ Creates a decorator you can pass a component to. The decorated component's props
 
 ##### `config`
 
-`reducer(currentState, {type, payload, ...}, context)` (*Function*):
+`reducer(currentState, {type, payload, ...}, props, context)` (*Function*):
 
-Returns the next state, given the current state, an action & contextual state. `context`'s object properties include the state of ancestors picked via `contextSubscribe`.
+Returns the next state, given the current state, an action, parent props & contextual state. `context`'s object properties include the state of ancestors picked via `contextSubscribe`.
 
 `enhancer()` (*Function*):
 
@@ -82,7 +82,7 @@ const Ancestor = Mirror({
 )
 
 const Descendant = Mirror({
-  reducer: (currentState, action, {ancestor}) => { /* ... */ },
+  reducer: (currentState, action, props, {ancestor}) => { /* ... */ },
   contextSubscribe: 'ancestor'
 })(
   ({dispatch, context: {ancestor}, ...state}) => (
@@ -135,12 +135,12 @@ const Form = () => (
 
 ```js
 const MyComponent = Mirror({ /* ... */ })(
-  React.createClass({
+  class MyComponent extends Component {
     componentWillMount() {
       this.unsubscribe = this.props.subscribe((action, state, prevState) => { /* ... */ })
-    },
+    }
     render() { /* ... */ },
-  })
+  }
 )
 ```
 
@@ -154,13 +154,13 @@ Calls the reducer with an action. If `context` is undefined the action is dispat
 
 #### Actions
 
-`INITIALIZE(props)`:
+`INITIALIZE()`:
 
-Called before component mounts with initial props. All props are intercepted by the store, you'll need to return them from the reducer to access parent props.
+Called before component mounts.
 
-`UPDATE_PROPS(nextProps)`:
+`UPDATE_PROPS()`:
 
-Called when parent updates child props. Parents cannot freely update wrapped child props, you'll need to return the updated state from the reducer for prop changes to have any effect.
+Called when parent updates child props. Parents cannot freely update wrapped child props, you'll need to return the updated state from the reducer for prop changes to have any effect (props are the third argument).
 
 `UPDATE_CONTEXT(updatedContextName)`:
 

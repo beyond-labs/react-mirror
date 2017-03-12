@@ -54,6 +54,7 @@ export const Mirror = (config = {}, options = {}) => {
               `passed "${context}" to contextPublish for a parent store.`
           );
         });
+        this.props = props;
         this.localStore = createLocalStore(this, config, options);
         this.localStore.subscribeParent(props.subscribe);
         this.localStore.subscribe((action, state) => {
@@ -62,7 +63,7 @@ export const Mirror = (config = {}, options = {}) => {
             this.setState({state, context});
           }
         });
-        this.localStore.dispatch('INITIALIZE', _.omit(props, 'subscribe'));
+        this.localStore.dispatch('INITIALIZE');
         this.state = {state: this.localStore.getState(), context: this.localStore.getStateContext()};
       }
       getChildContext() {
@@ -71,7 +72,7 @@ export const Mirror = (config = {}, options = {}) => {
       shouldComponentUpdate(nextProps, nextState) {
         if (nextProps !== this.props) {
           this.localStore.subscribeParent(nextProps.subscribe);
-          setTimeout(() => this.localStore.dispatch('UPDATE_PROPS', _.omit(nextProps, 'subscribe')));
+          setTimeout(() => this.localStore.dispatch('UPDATE_PROPS'));
         }
         return nextState !== this.state;
       }

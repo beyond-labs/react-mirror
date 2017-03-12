@@ -21,7 +21,7 @@ const updateState = (state, action) => {
   invariant(store, `The store you're dispatching an action (${action.type}) ` + "to doesn't exist any more.");
   const key = store.meta.path.slice(-1)[0];
   const {context} = normalizeState(store.meta.contextSubscribe, store.meta.path, state);
-  const nextState = store.meta.reducer(store.state, action, context);
+  const nextState = store.meta.reducer(store.state, action, store.meta.instance.props || {}, context);
   state = setPure(state, ['stores', key, 'state'], nextState);
 
   const isRoot = store.meta.path.length === 1;

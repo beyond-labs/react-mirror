@@ -3,16 +3,7 @@ import React from 'react';
 import Mirror from '../../../index';
 
 const Input = Mirror({
-  reducer: (state, {type, payload}) => {
-    switch (type) {
-      case 'INITIALIZE':
-        return payload;
-      case 'UPDATE_PROPS':
-        return payload;
-      default:
-        return state;
-    }
-  },
+  reducer: (state, action, props) => props,
   contextSubscribe: 'BMICalculator'
 })(function Input({dispatch, subscribe, context, ...props}) {
   return (

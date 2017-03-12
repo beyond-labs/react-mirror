@@ -4,12 +4,11 @@ import Mirror from '../../../index';
 
 const Input = Mirror(
   {
-    reducer: (state, {type, payload}) => {
+    reducer: (state, {type, payload}, props) => {
       switch (type) {
         case 'INITIALIZE':
-          return payload;
         case 'UPDATE_PROPS':
-          return payload;
+          return props;
         case 'CHANGE':
           return {...state, ...payload};
         default:
