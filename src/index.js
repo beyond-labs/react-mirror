@@ -1,4 +1,4 @@
-import Mirror from './Mirror'
+import Mirror from './Mirror';
 
-export {Mirror}
-export default Mirror
+export {Mirror};
+export default Mirror;
