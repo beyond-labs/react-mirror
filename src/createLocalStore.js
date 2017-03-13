@@ -33,8 +33,8 @@ const _dispatch = (action = {}, context, instance) => {
     );
     storeKey = store.meta.path.slice(-1)[0];
   }
-  action = setPure(action, 'meta.store', storeKey);
-  action = setPure(action, 'meta.origin', originKey);
+  action.store = storeKey;
+  action.origin = originKey;
   instance.rootStore.dispatch(action);
 };
 
@@ -94,7 +94,6 @@ export const createLocalStore = (instance, config, options) => {
     _state = state;
     _context = context;
     const updatedContextName = contextSubscribe[contextSubscribeKeys.indexOf(storeUpdated)];
-    if (updatedContextName) store.dispatch('UPDATE_CONTEXT', updatedContextName);
     if (
       shouldUpdate(
         pure,
@@ -106,6 +105,7 @@ export const createLocalStore = (instance, config, options) => {
     ) {
       subscriptions.forEach(({f}) => f(action, state, prevState));
     }
+    if (updatedContextName) store.dispatch('UPDATE_CONTEXT', updatedContextName);
   });
   store.destroy = () => {
     subscriptions.forEach(({cancel}) => cancel());

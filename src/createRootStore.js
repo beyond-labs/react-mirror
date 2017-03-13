@@ -16,12 +16,11 @@ const removeStore = (state, key) => {
 };
 
 const updateState = (state, action) => {
-  if (!_.get(action, 'meta.store')) return state;
-  const store = state.stores[action.meta.store];
+  if (!action.store) return state;
+  const store = state.stores[action.store];
   invariant(store, `The store you're dispatching an action (${action.type}) to doesn't exist any more.`);
   const key = store.meta.path.slice(-1)[0];
-  const {context} = normalizeState(store.meta.contextSubscribe, store.meta.path, state);
-  const nextState = store.meta.reducer(store.state, action, store.meta.instance.props || {}, context);
+  const nextState = store.meta.reducer(store.state, action, action.props, action.context);
   state = setPure(state, ['stores', key, 'state'], nextState);
 
   const isRoot = store.meta.path.length === 1;
@@ -33,12 +32,23 @@ const updateState = (state, action) => {
 };
 
 const defaultStoreMiddleware = store => next => action => {
-  if (!_.get(action, 'meta.store')) {
+  if (!action.store) {
     const state = store.getState();
-    const rootStore = Object.values(state.stores).find(store => store.meta.path.length === 1);
-    const key = _.get(rootStore, 'meta.path', []).slice(-1)[0] || null;
-    action = setPure(action, 'meta.store', key);
+    const rootStoreKey = _.get(Object.values(state.stores), '0.meta.path.0');
+    action.store = rootStoreKey;
   }
+  return next(action);
+};
+
+const propsMiddleware = store => next => action => {
+  if (['@@redux/INIT', '@@mirror/ADD_STORE', '@@mirror/REMOVE_STORE'].includes(action.type)) return next(action);
+
+  const state = store.getState();
+  const localStore = state.stores[action.store];
+  const {context} = normalizeState(localStore.meta.contextSubscribe, localStore.meta.path, state);
+  action.context = context;
+  action.props = localStore.meta.instance.props || {};
+
   return next(action);
 };
 
@@ -54,7 +64,7 @@ const subscribeEnhancer = next => (...args) => {
   };
   store.subscribe = f => {
     return _subscribe(() => {
-      f(action.meta.store, action, store.getState(), prevState);
+      f(action.store, action, store.getState(), prevState);
     });
   };
   return store;
@@ -75,7 +85,10 @@ export const createRootStore = ({enhancer}) => {
     }
   };
 
-  return createReduxStore(reducer, compose(applyMiddleware(defaultStoreMiddleware), subscribeEnhancer, enhancer));
+  return createReduxStore(
+    reducer,
+    compose(applyMiddleware(defaultStoreMiddleware, propsMiddleware), subscribeEnhancer, enhancer)
+  );
 };
 
 export default createRootStore;

@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Counter from './Counter';
 import Mirror from '../../../index';
+import enhancer from './enhancer';
 
 const MyComponent = Mirror({
   reducer: ({numberOfCounters = 2}, {type, payload = 1}) => {
@@ -13,7 +14,8 @@ const MyComponent = Mirror({
       default:
         return {numberOfCounters};
     }
-  }
+  },
+  enhancer
 })(({numberOfCounters, dispatch}) => (
   <div>
     {Array(numberOfCounters).fill().map((_, index) => <Counter key={index} />)}

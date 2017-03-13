@@ -1442,8 +1442,8 @@ var _dispatch = function _dispatch() {
     (0, _invariant2.default)(store, 'Could not find "' + context + '" among the ancestors of ' + ('"' + instance.constructor.displayName + '". ') + 'Check you passed the correct value to dispatch and ' + ('passed "' + context + '" to contextPublish for a parent store.'));
     storeKey = store.meta.path.slice(-1)[0];
   }
-  action = (0, _setPure2.default)(action, 'meta.store', storeKey);
-  action = (0, _setPure2.default)(action, 'meta.origin', originKey);
+  action.store = storeKey;
+  action.origin = originKey;
   instance.rootStore.dispatch(action);
 };
 
@@ -1548,13 +1548,13 @@ var createLocalStore = exports.createLocalStore = function createLocalStore(inst
     _state = state;
     _context = context;
     var updatedContextName = contextSubscribe[contextSubscribeKeys.indexOf(storeUpdated)];
-    if (updatedContextName) store.dispatch('UPDATE_CONTEXT', updatedContextName);
     if (shouldUpdate(pure, storeUpdated, [].concat((0, _toConsumableArray3.default)(contextSubscribeKeys), [key]), (0, _assign2.default)({}, state, { context: context }), (0, _assign2.default)({}, prevState, { context: prevContext }))) {
       subscriptions.forEach(function (_ref3) {
         var f = _ref3.f;
         return f(action, state, prevState);
       });
     }
+    if (updatedContextName) store.dispatch('UPDATE_CONTEXT', updatedContextName);
   });
   store.destroy = function () {
     subscriptions.forEach(function (_ref4) {
@@ -1628,15 +1628,11 @@ var removeStore = function removeStore(state, key) {
 };
 
 var updateState = function updateState(state, action) {
-  if (!(0, _get3.default)(action, 'meta.store')) return state;
-  var store = state.stores[action.meta.store];
+  if (!action.store) return state;
+  var store = state.stores[action.store];
   (0, _invariant2.default)(store, 'The store you\'re dispatching an action (' + action.type + ') to doesn\'t exist any more.');
   var key = store.meta.path.slice(-1)[0];
-
-  var _normalizeState = (0, _normalizeState3.default)(store.meta.contextSubscribe, store.meta.path, state),
-      context = _normalizeState.context;
-
-  var nextState = store.meta.reducer(store.state, action, store.meta.instance.props || {}, context);
+  var nextState = store.meta.reducer(store.state, action, action.props, action.context);
   state = (0, _setPure2.default)(state, ['stores', key, 'state'], nextState);
 
   var isRoot = store.meta.path.length === 1;
@@ -1650,14 +1646,30 @@ var updateState = function updateState(state, action) {
 var defaultStoreMiddleware = function defaultStoreMiddleware(store) {
   return function (next) {
     return function (action) {
-      if (!(0, _get3.default)(action, 'meta.store')) {
+      if (!action.store) {
         var state = store.getState();
-        var rootStore = (0, _values2.default)(state.stores).find(function (store) {
-          return store.meta.path.length === 1;
-        });
-        var key = (0, _get3.default)(rootStore, 'meta.path', []).slice(-1)[0] || null;
-        action = (0, _setPure2.default)(action, 'meta.store', key);
+        var rootStoreKey = (0, _get3.default)((0, _values2.default)(state.stores), '0.meta.path.0');
+        action.store = rootStoreKey;
       }
+      return next(action);
+    };
+  };
+};
+
+var propsMiddleware = function propsMiddleware(store) {
+  return function (next) {
+    return function (action) {
+      if (['@@redux/INIT', '@@mirror/ADD_STORE', '@@mirror/REMOVE_STORE'].includes(action.type)) return next(action);
+
+      var state = store.getState();
+      var localStore = state.stores[action.store];
+
+      var _normalizeState = (0, _normalizeState3.default)(localStore.meta.contextSubscribe, localStore.meta.path, state),
+          context = _normalizeState.context;
+
+      action.context = context;
+      action.props = localStore.meta.instance.props || {};
+
       return next(action);
     };
   };
@@ -1685,7 +1697,7 @@ var subscribeEnhancer = function subscribeEnhancer(next) {
     };
     store.subscribe = function (f) {
       return _subscribe(function () {
-        f(action.meta.store, action, store.getState(), prevState);
+        f(action.store, action, store.getState(), prevState);
       });
     };
     return store;
@@ -1716,7 +1728,7 @@ var createRootStore = exports.createRootStore = function createRootStore(_ref) {
     }
   };
 
-  return (0, _redux.createStore)(reducer, (0, _redux.compose)((0, _redux.applyMiddleware)(defaultStoreMiddleware), subscribeEnhancer, enhancer));
+  return (0, _redux.createStore)(reducer, (0, _redux.compose)((0, _redux.applyMiddleware)(defaultStoreMiddleware, propsMiddleware), subscribeEnhancer, enhancer));
 };
 
 exports.default = createRootStore;
