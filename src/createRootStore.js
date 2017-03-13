@@ -18,7 +18,7 @@ const removeStore = (state, key) => {
 const updateState = (state, action) => {
   if (!_.get(action, 'meta.store')) return state;
   const store = state.stores[action.meta.store];
-  invariant(store, `The store you're dispatching an action (${action.type}) ` + "to doesn't exist any more.");
+  invariant(store, `The store you're dispatching an action (${action.type}) to doesn't exist any more.`);
   const key = store.meta.path.slice(-1)[0];
   const {context} = normalizeState(store.meta.contextSubscribe, store.meta.path, state);
   const nextState = store.meta.reducer(store.state, action, store.meta.instance.props || {}, context);

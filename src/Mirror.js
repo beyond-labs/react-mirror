@@ -9,6 +9,8 @@ const getDisplayName = WrappedComponent => {
   return WrappedComponent.displayName || WrappedComponent.name || 'Component';
 };
 
+const createStoreStub = () => ({dispatch() {}, getState() {}, subscribe() {}});
+
 const storeShape = PropTypes.shape({
   subscribe: PropTypes.func.isRequired,
   dispatch: PropTypes.func.isRequired,
@@ -16,6 +18,8 @@ const storeShape = PropTypes.shape({
 });
 
 export const Mirror = (config = {}, options = {}) => {
+  // TODO: warn if:
+  // reducer accepts context but no contextSubscribe in config
   const {enhancer} = config;
 
   return function wrapWithMirror(WrappedComponent) {
@@ -82,8 +86,8 @@ export const Mirror = (config = {}, options = {}) => {
         // these are just to guard against extra memory leakage if a parent element doesn't
         // dereference this instance properly, such as an async callback that never finishes
         this.path = null;
-        this.rootStore = null;
-        this.localStore = null;
+        this.rootStore = createStoreStub();
+        this.localStore = createStoreStub();
         this.getWrappedInstance = () => {};
         this.replaceKey = () => {};
       }

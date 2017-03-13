@@ -1242,6 +1242,14 @@ var getDisplayName = function getDisplayName(WrappedComponent) {
   return WrappedComponent.displayName || WrappedComponent.name || 'Component';
 };
 
+var createStoreStub = function createStoreStub() {
+  return {
+    dispatch: function dispatch() {},
+    getState: function getState() {},
+    subscribe: function subscribe() {}
+  };
+};
+
 var storeShape = _react.PropTypes.shape({
   subscribe: _react.PropTypes.func.isRequired,
   dispatch: _react.PropTypes.func.isRequired,
@@ -1251,6 +1259,9 @@ var storeShape = _react.PropTypes.shape({
 var Mirror = exports.Mirror = function Mirror() {
   var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
   var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+  // TODO: warn if:
+  // reducer accepts context but no contextSubscribe in config
   var enhancer = config.enhancer;
 
 
@@ -1321,8 +1332,8 @@ var Mirror = exports.Mirror = function Mirror() {
           // these are just to guard against extra memory leakage if a parent element doesn't
           // dereference this instance properly, such as an async callback that never finishes
           this.path = null;
-          this.rootStore = null;
-          this.localStore = null;
+          this.rootStore = createStoreStub();
+          this.localStore = createStoreStub();
           this.getWrappedInstance = function () {};
           this.replaceKey = function () {};
         }
@@ -1619,7 +1630,7 @@ var removeStore = function removeStore(state, key) {
 var updateState = function updateState(state, action) {
   if (!(0, _get3.default)(action, 'meta.store')) return state;
   var store = state.stores[action.meta.store];
-  (0, _invariant2.default)(store, 'The store you\'re dispatching an action (' + action.type + ') ' + "to doesn't exist any more.");
+  (0, _invariant2.default)(store, 'The store you\'re dispatching an action (' + action.type + ') to doesn\'t exist any more.');
   var key = store.meta.path.slice(-1)[0];
 
   var _normalizeState = (0, _normalizeState3.default)(store.meta.contextSubscribe, store.meta.path, state),
