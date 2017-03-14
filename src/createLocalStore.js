@@ -11,12 +11,6 @@ const shouldUpdate = (pure, storeUpdated, subscribedTo, state, prevState) => {
   if (!pure) return true;
   if (typeof pure === 'function') return pure(state, prevState);
   if (!shallowEqual(state, prevState)) return true;
-  if (subscribedTo) {
-    for (let key in subscribedTo) {
-      // eslint-disable-line prefer-const
-      if (!shallowEqual(state.context[key], prevState.context[key])) return true;
-    }
-  }
 };
 
 const _dispatch = (action = {}, context, instance) => {

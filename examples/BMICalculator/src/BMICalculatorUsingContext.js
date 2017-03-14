@@ -3,13 +3,12 @@ import React from 'react';
 import Mirror from '../../../index';
 
 const Input = Mirror({
-  reducer: (state, action, props) => props,
+  reducer: (state, action, props, {BMICalculator}) => ({...props, value: BMICalculator[props.name]}),
   contextSubscribe: 'BMICalculator'
-})(function Input({dispatch, subscribe, context, ...props}) {
+})(function Input({dispatch, subscribe, ...props}) {
   return (
     <input
       type="range"
-      value={context.BMICalculator[props.name]}
       {...props}
       onChange={e => {
         e = _.pick(e.target, ['value', 'name']);

@@ -17,7 +17,7 @@ const Input = Mirror(
     }
   },
   {pure: false}
-)(function Input({dispatch, subscribe, context, ...props}) {
+)(function Input({dispatch, subscribe, ...props}) {
   return (
     <input
       type="range"

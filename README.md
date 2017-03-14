@@ -85,7 +85,7 @@ const Descendant = Mirror({
   reducer: (currentState, action, props, {ancestor}) => { /* ... */ },
   contextSubscribe: 'ancestor'
 })(
-  ({dispatch, context: {ancestor}, ...state}) => (
+  ({dispatch, ...state}) => (
     <div>
       { /* ... */ }
       <button
@@ -98,22 +98,9 @@ const Descendant = Mirror({
 
 ##### `options`
 
-`pure` (*Boolean|Function*):
+`pure` (*Function*):
 
-If `true`, `Mirror` will avoid re-renders if, after dispatching an action, the following equality check returns `true`:
-
-```js
-const pure = (state, prevState) => {
-  if (!shallowEqual(state, prevState)) return true
-  if (state.context) {
-    for (key in state.context) {
-      if (!shallowEqual(state.context[key], prevState.context[key])) return true
-    }
-  }
-}
-```
-
-You can use your own equality check by providing a function. Default value: `true`.
+`Mirror` will avoid re-renders if, after dispatching an action, pure returns `false`. Default value: `shallowEqual`.
 
 #### Props
 
@@ -147,10 +134,6 @@ const MyComponent = Mirror({ /* ... */ })(
 `dispatch(type, [context], [payload], [metadata]) | ({type, payload, ...metadata}, [context])` (*Function*):
 
 Calls the reducer with an action. If `context` is undefined the action is dispatched to the local store.
-
-`context` (*Object*):
-
-`context`'s object properties include the state of ancestors picked via `contextSubscribe`.
 
 #### Actions
 

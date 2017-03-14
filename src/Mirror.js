@@ -63,12 +63,11 @@ export const Mirror = (config = {}, options = {}) => {
         this.localStore.subscribeParent(props.subscribe);
         this.localStore.subscribe((action, state) => {
           if (!['INITIALIZE', 'UNMOUNT_COMPONENT'].includes(action.type)) {
-            const context = this.localStore.getStateContext();
-            this.setState({state, context});
+            this.setState({state});
           }
         });
         this.localStore.dispatch('INITIALIZE');
-        this.state = {state: this.localStore.getState(), context: this.localStore.getStateContext()};
+        this.state = {state: this.localStore.getState()};
       }
       getChildContext() {
         return {rootStore: this.rootStore, path: this.path};
@@ -92,8 +91,8 @@ export const Mirror = (config = {}, options = {}) => {
         this.replaceKey = () => {};
       }
       render() {
-        const {state, context} = this.state;
-        const props = {...state, context, dispatch: this.localStore.dispatch, subscribe: this.localStore.subscribe};
+        const {state} = this.state;
+        const props = {...state, dispatch: this.localStore.dispatch, subscribe: this.localStore.subscribe};
 
         return createElement(WrappedComponent, props);
       }

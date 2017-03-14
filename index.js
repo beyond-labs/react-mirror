@@ -1297,12 +1297,11 @@ var Mirror = exports.Mirror = function Mirror() {
         _this.localStore.subscribeParent(props.subscribe);
         _this.localStore.subscribe(function (action, state) {
           if (!['INITIALIZE', 'UNMOUNT_COMPONENT'].includes(action.type)) {
-            var _context = _this.localStore.getStateContext();
-            _this.setState({ state: state, context: _context });
+            _this.setState({ state: state });
           }
         });
         _this.localStore.dispatch('INITIALIZE');
-        _this.state = { state: _this.localStore.getState(), context: _this.localStore.getStateContext() };
+        _this.state = { state: _this.localStore.getState() };
         return _this;
       }
 
@@ -1340,11 +1339,9 @@ var Mirror = exports.Mirror = function Mirror() {
       }, {
         key: 'render',
         value: function render() {
-          var _state = this.state,
-              state = _state.state,
-              context = _state.context;
+          var state = this.state.state;
 
-          var props = (0, _assign2.default)({}, state, { context: context, dispatch: this.localStore.dispatch, subscribe: this.localStore.subscribe });
+          var props = (0, _assign2.default)({}, state, { dispatch: this.localStore.dispatch, subscribe: this.localStore.subscribe });
 
           return (0, _react.createElement)(WrappedComponent, props);
         }
@@ -1422,12 +1419,6 @@ var shouldUpdate = function shouldUpdate(pure, storeUpdated, subscribedTo, state
   if (!pure) return true;
   if (typeof pure === 'function') return pure(state, prevState);
   if (!(0, _shallowEqual2.default)(state, prevState)) return true;
-  if (subscribedTo) {
-    for (var key in subscribedTo) {
-      // eslint-disable-line prefer-const
-      if (!(0, _shallowEqual2.default)(state.context[key], prevState.context[key])) return true;
-    }
-  }
 };
 
 var _dispatch = function _dispatch() {
