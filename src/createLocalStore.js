@@ -84,22 +84,16 @@ export const createLocalStore = (instance, config, options) => {
   const cancelRootSubscription = rootStore.subscribe((storeUpdated, action, rootState, rootPrevState) => {
     if (['@@mirror/ADD_STORE', '@@mirror/REMOVE_STORE'].includes(action.type)) return;
     const {state, context} = normalizeState(contextSubscribe, path, rootState);
-    const {state: prevState, context: prevContext} = normalizeState(contextSubscribe, path, rootPrevState);
+    const {state: prevState} = normalizeState(contextSubscribe, path, rootPrevState);
     _state = state;
     _context = context;
     const updatedContextName = contextSubscribe[contextSubscribeKeys.indexOf(storeUpdated)];
-    if (
-      shouldUpdate(
-        pure,
-        storeUpdated,
-        [...contextSubscribeKeys, key],
-        {...state, context},
-        {...prevState, context: prevContext}
-      )
-    ) {
+    if (shouldUpdate(pure, storeUpdated, [...contextSubscribeKeys, key], {...state}, {...prevState})) {
       subscriptions.forEach(({f}) => f(action, state, prevState));
     }
-    if (updatedContextName) store.dispatch('UPDATE_CONTEXT', updatedContextName);
+    if (updatedContextName) {
+      setTimeout(() => store.dispatch('UPDATE_CONTEXT', updatedContextName));
+    }
   });
   store.destroy = () => {
     subscriptions.forEach(({cancel}) => cancel());

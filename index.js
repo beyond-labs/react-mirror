@@ -1533,19 +1533,22 @@ var createLocalStore = exports.createLocalStore = function createLocalStore(inst
         context = _normalizeState.context;
 
     var _normalizeState2 = (0, _normalizeState4.default)(contextSubscribe, path, rootPrevState),
-        prevState = _normalizeState2.state,
-        prevContext = _normalizeState2.context;
+        prevState = _normalizeState2.state;
 
     _state = state;
     _context = context;
     var updatedContextName = contextSubscribe[contextSubscribeKeys.indexOf(storeUpdated)];
-    if (shouldUpdate(pure, storeUpdated, [].concat((0, _toConsumableArray3.default)(contextSubscribeKeys), [key]), (0, _assign2.default)({}, state, { context: context }), (0, _assign2.default)({}, prevState, { context: prevContext }))) {
+    if (shouldUpdate(pure, storeUpdated, [].concat((0, _toConsumableArray3.default)(contextSubscribeKeys), [key]), (0, _assign2.default)({}, state), (0, _assign2.default)({}, prevState))) {
       subscriptions.forEach(function (_ref3) {
         var f = _ref3.f;
         return f(action, state, prevState);
       });
     }
-    if (updatedContextName) store.dispatch('UPDATE_CONTEXT', updatedContextName);
+    if (updatedContextName) {
+      setTimeout(function () {
+        return store.dispatch('UPDATE_CONTEXT', updatedContextName);
+      });
+    }
   });
   store.destroy = function () {
     subscriptions.forEach(function (_ref4) {
