@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import invariant from 'invariant';
-import setPure from './utils/setPure';
 import shallowEqual from './utils/shallowEqual';
 import subNamesToKeys from './utils/subNamesToKeys';
 import normalizeState from './utils/normalizeState';
@@ -32,13 +31,31 @@ const _dispatch = (action = {}, context, instance) => {
   instance.rootStore.dispatch(action);
 };
 
-const dispatch = instance => (...args) => {
-  const [type, context, payload, metadata] = args;
-  if (typeof type !== 'string') return _dispatch(type, context, instance);
-  if (args.length === 1) return _dispatch({type}, null, instance);
-  if (args.length === 2) return _dispatch({type, payload: context}, null, instance);
-  if (args.length === 3) return _dispatch({type, payload}, context, instance);
-  return _dispatch({type, payload, ...metadata}, context, instance);
+const dispatch = instance =>
+  (...args) => {
+    const [type, context, payload, metadata] = args;
+    if (typeof type !== 'string') return _dispatch(type, context, instance);
+    if (args.length === 1) return _dispatch({type}, null, instance);
+    if (args.length === 2) return _dispatch({type, payload: context}, null, instance);
+    if (args.length === 3) return _dispatch({type, payload}, context, instance);
+    return _dispatch({type, payload, ...metadata}, context, instance);
+  };
+
+// always trailing
+const throttleBy = (f, wait = 0, getKey = a => JSON.stringify(a)) => {
+  const cache = {};
+  return (...args) => {
+    const key = getKey(...args);
+    const counter = ((cache[key] || 0) + 1) % Number.MAX_SAFE_INTEGER;
+    cache[key] = counter;
+    setTimeout(
+      () => {
+        if (cache[key] !== counter) return;
+        f(...args);
+      },
+      wait
+    );
+  };
 };
 
 export const createLocalStore = (instance, config, options) => {
@@ -80,6 +97,10 @@ export const createLocalStore = (instance, config, options) => {
     getState: () => _state,
     getStateContext: () => _context
   };
+  const updateContextThrottled = throttleBy(
+    updatedContextName => store.dispatch('UPDATE_CONTEXT', updatedContextName),
+    50
+  );
   const contextSubscribeKeys = subNamesToKeys(contextSubscribe, path, rootStore.getState());
   const cancelRootSubscription = rootStore.subscribe((storeUpdated, action, rootState, rootPrevState) => {
     if (['@@mirror/ADD_STORE', '@@mirror/REMOVE_STORE'].includes(action.type)) return;
@@ -92,7 +113,7 @@ export const createLocalStore = (instance, config, options) => {
       subscriptions.forEach(({f}) => f(action, state, prevState));
     }
     if (updatedContextName) {
-      setTimeout(() => store.dispatch('UPDATE_CONTEXT', updatedContextName));
+      updateContextThrottled(updatedContextName);
     }
   });
   store.destroy = () => {

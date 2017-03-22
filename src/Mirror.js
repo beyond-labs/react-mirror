@@ -3,7 +3,6 @@ import invariant from 'invariant';
 import {Component, PropTypes, createElement} from 'react';
 import createRootStore from './createRootStore';
 import createLocalStore from './createLocalStore';
-import findStoreByContext from './utils/findStoreByContext';
 
 const getDisplayName = WrappedComponent => {
   return WrappedComponent.displayName || WrappedComponent.name || 'Component';
@@ -48,16 +47,6 @@ export const Mirror = (config = {}, options = {}) => {
           this.rootStore = context.rootStore;
           this.path = context.path.concat(key);
         }
-        (props.contextSubscribe || []).forEach(context => {
-          const store = findStoreByContext(this, context);
-          invariant(
-            store,
-            `Could not find "${context}" among the ancestors of ` +
-              `"${this.constructor.displayName}". ` +
-              'Check you passed the correct value to contextSubscribe and ' +
-              `passed "${context}" to contextPublish for a parent store.`
-          );
-        });
         this.props = props;
         this.localStore = createLocalStore(this, config, options);
         this.localStore.subscribeParent(props.subscribe);
