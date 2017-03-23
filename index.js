@@ -1445,7 +1445,7 @@ var createLocalStore = exports.createLocalStore = function createLocalStore(inst
       path: path,
       name: instance.constructor.displayName,
       instance: instance,
-      reducer: reducer,
+      reducer: reducer.bind(instance),
       middleware: middleware,
       contextSubscribe: contextSubscribe,
       contextPublish: contextPublish

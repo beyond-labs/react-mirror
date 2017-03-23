@@ -71,7 +71,7 @@ export const createLocalStore = (instance, config, options) => {
       path,
       name: instance.constructor.displayName,
       instance,
-      reducer,
+      reducer: reducer.bind(instance),
       middleware,
       contextSubscribe,
       contextPublish
