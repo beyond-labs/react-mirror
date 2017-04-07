@@ -73,7 +73,7 @@ export const Mirror = (config = {}, options = {}) => {
         this.localStore.destroy();
         // these are just to guard against extra memory leakage if a parent element doesn't
         // dereference this instance properly, such as an async callback that never finishes
-        this.path = null;
+        this.path = [];
         this.rootStore = createStoreStub();
         this.localStore = createStoreStub();
         this.getWrappedInstance = () => {};

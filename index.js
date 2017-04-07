@@ -1266,7 +1266,7 @@ var Mirror = exports.Mirror = function Mirror() {
           this.localStore.destroy();
           // these are just to guard against extra memory leakage if a parent element doesn't
           // dereference this instance properly, such as an async callback that never finishes
-          this.path = null;
+          this.path = [];
           this.rootStore = createStoreStub();
           this.localStore = createStoreStub();
           this.getWrappedInstance = function () {};
@@ -1488,7 +1488,7 @@ var createLocalStore = exports.createLocalStore = function createLocalStore(inst
     }
   };
   var updateContextThrottled = throttleBy(function (updatedContextName) {
-    return store.dispatch('UPDATE_CONTEXT', updatedContextName);
+    return instance.localStore.dispatch('UPDATE_CONTEXT', updatedContextName);
   }, 50);
   var contextSubscribeKeys = (0, _subNamesToKeys2.default)(contextSubscribe, path, rootStore.getState());
   var cancelRootSubscription = rootStore.subscribe(function (storeUpdated, action, rootState, rootPrevState) {
@@ -1520,6 +1520,7 @@ var createLocalStore = exports.createLocalStore = function createLocalStore(inst
       return cancel();
     });
     cancelRootSubscription();
+    updateContextThrottled = function updateContextThrottled() {};
     rootStore.dispatch({
       type: '@@mirror/REMOVE_STORE',
       payload: key

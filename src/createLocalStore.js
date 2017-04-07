@@ -97,8 +97,8 @@ export const createLocalStore = (instance, config, options) => {
     getState: () => _state,
     getStateContext: () => _context
   };
-  const updateContextThrottled = throttleBy(
-    updatedContextName => store.dispatch('UPDATE_CONTEXT', updatedContextName),
+  let updateContextThrottled = throttleBy(
+    updatedContextName => instance.localStore.dispatch('UPDATE_CONTEXT', updatedContextName),
     50
   );
   const contextSubscribeKeys = subNamesToKeys(contextSubscribe, path, rootStore.getState());
@@ -119,6 +119,7 @@ export const createLocalStore = (instance, config, options) => {
   store.destroy = () => {
     subscriptions.forEach(({cancel}) => cancel());
     cancelRootSubscription();
+    updateContextThrottled = () => {};
     rootStore.dispatch({
       type: '@@mirror/REMOVE_STORE',
       payload: key
