@@ -68,13 +68,15 @@ mirror.one('todo-list/shopping').children('todo-item') // Every "todo-item" insi
 
 `filter` can be a store ID, name or component.
 
-* `root()` - Get the root store
-* `parents(filter, maxStores)` - Get one or more parent stores (all ancestors)
-* `children(filter, maxStores)` - Get one or more child stores (all descendants)
+```js
+root()                      // Get the root store
+parents(filter, maxStores)  // Get one or more parent stores (all ancestors)
+children(filter, maxStores) // Get one or more child stores (all descendants)
 
-* `all(filter, maxStores)` - Same as `root().children(filter, maxStores)`
-* `one(filter)` - Same as `all(filter, 1)`
-* `parent(filter)` - Same as `parents(filter, 1)`
+all(filter, maxStores) // Same as `root().children(filter, maxStores)`
+one(filter)            // Same as `all(filter, 1)`
+parent(filter)         // Same as `parents(filter, 1)`
+```
 
 **Two types of cursor**
 
