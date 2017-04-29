@@ -43,7 +43,7 @@ Other solutions like Cycle.js suggest composing local state into a single state 
 
 **Mirror composes local stores into a single tree (like Cycle.js), and gives every store access to the entire tree (like Redux).**
 
-Any store can dispatch actions to, and query, (the action/state streams of) any other store (or collection of). Each store injects props from it's state stream into the component they decorate.
+Stores can dispatch actions to, and query, (the action/state streams of) any other store (or collection of). Each store injects props from it's state stream into the component they decorate.
 
 ## Usage
 
@@ -80,67 +80,93 @@ parent(filter)         // Same as `parents(filter, 1)`
 
 **Two types of cursor**
 
-1. The `mirror` cursor (first argument of `state`). It has three getters (`$props`, `$state` & `$actions`) for querying selected stores. eg,
-  * `mirror.$actions`
-  * `mirror.children('todo-list').$state`
-2. The `dispatch` cursor (second argument of `state` & injected as a prop). Call it like a function to dispatch actions to selected stores. eg,
-  * `dispatch('ACTION_TYPE', payload)`
-  * `dispatch.parent('todo-list')('ACTION_TYPE', payload)`
+The `mirror` cursor. `mirror` is the first argument of `state`, it has four getters (`$props`, `$state`, `$actions` & `$stores`) for querying selected stores.
+
+```js
+mirror.$actions
+mirror.children('todo-item').$state
+```
+
+The `dispatch` cursor. `dispatch` is the second argument of `state`, it is also injected as a prop to decorated components. Call it like a function to dispatch an action.
+
+```js
+dispatch('ACTION_TYPE', payload)
+dispatch.parent('todo-list')('ACTION_TYPE', payload)
+```
 
 ### Working with streams
 
-You can think of streams as arrays of events - and programs as streams that map user interaction to UI. Mirror uses XStream, but is compatible with other stream libraries like RxJS & most.js
+Streams are basically arrays of events. You can map, reduce, combine, and do [all sorts of cool things](www.rxmarbles.com) with them. `state` returns a stream - the first value represents the store's state when it's initialized, and the last value in the stream represents the store's current state. This section describes some patterns for creating, and using streams with Mirror.
 
-**Streams**
+Mirror uses [most.js](https://github.com/cujojs/most) (it's really fast). But you can use any streaming library that supports the `Observable` API like RxJS or XStream.
 
-* `$actions` - Actions dispatched to selected stores. Each action has a `type`, `payload` and `store` (id)
-* `$state` - Each value in the stream is an enum (array/object mashup) with the combined state of selected stores
-* `$props` - As above, but with props. It's advisable to avoid using `$props` (see caveats for details)
-* `$cursor` - Selected store IDs & tree describing your app's state structure. Emits a value every time a store is added or removed
+**Scanning actions**
 
-**Examples**
+Every action has a `type`, `payload` & `store` (id). Scanning actions means applying them to the current state one-by-one to produce new state.
 
 ```js
-// the "reducer" pattern
-mirror.$actions.fold((state, action) => {
-  /* ...; */
-  return nextState;
-})
-
-// network requests (Mirror exports handleActions, see Utilities for details)
-mirror.$actions
-  .tap(handleActions({
-    INITIALIZE() { dispatch('LOAD_DATA') }
-    LOAD_DATA() {
-      loadData()
-        .then(data => dispatch('LOAD_DATA_SUCCESS', data))
-        .catch(error => dispatch('LOAD_DATA_FAILURE', error))
-    }
-  }))
-  .fold(handleActions({
-    LOAD_DATA(state) { return {...state, loading: true} }
-    LOAD_DATA_SUCCESS(state, {payload: data}) { return {...state, loading: false, data} }
-    LOAD_DATA_FAILURE(state, {payload: error}) { return {...state, loading: false, error} }
-  }, {loading: false, data: null, error: null}))
-
-// querying children
-mirror.children('option').$state
-  .map(state => {
-    const selectedOption = state.find(({selected}) => selected)
-    return {value: selectedOption.value}
-  })
-
-// promise "middleware"
-mirror.all().$actions
-  .tap(({type, payload, store}) => {
-    if (!(payload instanceof Promise)) return
-    payload.then((payload) => {
-      dispatch.all(store)(`${type}_SUCCESS`, payload)
-    }).catch((error) => {
-      dispatch.all(store)(`${type}_FAILURE`, error)
-    })
-  })
+// For every action, emit a value 1 greater than the previous value
+$actions.scan(value => value + 1, 0)
 ```
+
+`handleActions` combines multiple action handlers into one function.
+
+```js
+import {handleActions} from 'react-mirror'
+
+handleActions({
+  INCREMENT(value) { return value + 1; }
+  DECREMENT(value) { return value - 1; }
+})
+```
+
+**Effects**
+
+I like using `tap` (never modifies values) & `dispatch` together to describe effects.
+
+```js
+$actions
+  .tap(
+    handleActions({
+      INITIALIZE() {
+        dispatch('LOAD_DATA');
+      },
+      LOAD_DATA() {
+        loadData()
+          .then(data => dispatch('LOAD_DATA_SUCCESS', data))
+          .catch(error => dispatch('LOAD_DATA_FAILURE', error));
+      },
+    })
+  )
+  .scan(/* ... */);
+```
+
+**Multi-Store Streams**
+
+Streams taken from `mirror` combine values from multiple stores. So it's important
+
+```
+----a----b--------c------>
+--1----------2----------->
+
+--1-a----b---2----c------>
+```
+
+Combining props
+
+```
+a--------b---c----------->
+1---2---------------3---->
+
+a1--a2---b2--c2-----c3--->
+```
+
+**Combining streams**
+
+
+Print out the state before & after every
+
+`[1, 2, 3].reduce((pv, v) => pv + v, 0) === 6`
 
 ### Stores
 
@@ -184,8 +210,6 @@ Access the wrapped component with `getWrappedInstance`:
   ref={ref => ref.getWrappedInstance().constructor === MyComponent}
 />
 ```
-
-Query filters can accept components, instead of an ID / name, eg `mirror.children(MyComponent)`
 
 Stores can have multiple names, eg `Mirror({name: ['form', 'form/create-project']})`
 
