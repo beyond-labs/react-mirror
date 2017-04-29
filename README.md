@@ -51,7 +51,7 @@ Stores can dispatch actions to, and query, (the action/state streams of) any oth
 
 Cursors point to a collection of stores, relative to another store. eg, "every `Todo` which is a child of this store (a `TodoList`)"
 
-**Examples**
+##### **Examples**
 
 ```js
 mirror                     // Local store
@@ -64,7 +64,7 @@ mirror.all('todo-list').children('todo-item')          // Every "todo-item" insi
 mirror.one('todo-list/shopping').children('todo-item') // Every "todo-item" inside "todo-list/shopping"
 ```
 
-**Methods**
+##### **Methods**
 
 `filter` can be a store ID, name or component.
 
@@ -78,7 +78,7 @@ one(filter)            // Same as `all(filter, 1)`
 parent(filter)         // Same as `parents(filter, 1)`
 ```
 
-**Two types of cursor**
+##### **Two types of cursor**
 
 The `mirror` cursor. `mirror` is the first argument of `state`, it has four getters (`$props`, `$state`, `$actions` & `$stores`) for querying selected stores.
 
@@ -100,7 +100,7 @@ Streams are basically arrays of events. You can map, reduce, combine, and do [al
 
 Mirror uses [most.js](https://github.com/cujojs/most) (it's really fast). But you can use any streaming library that supports the `Observable` API like RxJS or XStream.
 
-**Scanning actions**
+##### **Scanning actions**
 
 Every action has a `type`, `payload` & `store` (id). Scanning actions means applying them to the current state one-by-one to produce new state.
 
@@ -115,14 +115,16 @@ $actions.scan(value => value + 1, 0)
 import {handleActions} from 'react-mirror'
 
 handleActions({
-  INCREMENT(value) { return value + 1; }
-  DECREMENT(value) { return value - 1; }
-})
+  INCREMENT(value) { return value + 1; },
+  DECREMENT(value) { return value - 1; },
+}, 0)
 ```
 
-**Effects**
+##### **Effects**
 
-I like using `tap` (never modifies values) & `dispatch` together to describe effects.
+For every value in a stream, `tap` calls a function & ignores the result.
+
+I like using `tap` & `dispatch` together to describe effects.
 
 ```js
 $actions
@@ -141,67 +143,152 @@ $actions
   .scan(/* ... */);
 ```
 
-**Multi-Store Streams**
+##### **Multi-Store Streams**
 
-Streams taken from `mirror` combine values from multiple stores. So it's important
+Streams taken from `mirror` contain values from multiple stores. Mirror will `merge` actions & `combine` state / props.
 
-```
+##### `merge`
+
+```txt
 ----a----b--------c------>
 --1----------2----------->
 
 --1-a----b---2----c------>
 ```
 
-Combining props
+Use `most.merge` to include additional action streams.
 
+```js
+most.merge(
+  mirror.children('field').$actions,
+  mirror.$actions
+)
 ```
+
+##### `combine`
+
+```txt
 a--------b---c----------->
 1---2---------------3---->
 
 a1--a2---b2--c2-----c3--->
 ```
 
-**Combining streams**
+Every values in a state / prop stream is an `Enum`. That's an array with object-like properties for each value.
+
+```js
+stores = Enum(
+  [{store: 'oigkzfajky', value: 0}],
+  'store'
+)
+
+stores[0] === stores['oigkzfajky']
+```
+
+##### `$stores`
+
+By comparison, `$stores` emits a value every time a store is added or removed. Each value has a `selection` (array of store IDs) & `tree` (structured metadata).
+
+##### **Combining Streams**
+
+Mirror exports four helpers (`combine`, `combineSimple`, `combineNested` & `combineActionsWith`) for combining streams together.
+
+Use `combine` to combine multiple state streams, or multiple prop streams.
+
+```js
+import {combine} from 'react-mirror'
+
+combine(
+  mirror.children('field/title', 1).$state,
+  mirror.children('field/description', 1).$state
+)
+```
+
+Use `combineNested` to combine state & prop streams together.
+
+```js
+import {combine, combineSimple, combineNested} from 'react-mirror'
+
+combineSimple(
+  mirror.$stores.take(1).map(({selected}) => selected),
+  combineNested({
+    state: combine(
+      mirror.$state,
+      mirror.children('field').$state
+    ),
+    props: mirror.$props
+  })
+)
+
+combineStateWithProps(
+  mirror.children('field').$state,
+  mirror.$props
+).take(1).tap(::console.log)
+
+// Enum([{state: undefined, props}, ...{state, props}], 'state.store')
+```
+
+##### **Combining Actions with State**
 
 
 Print out the state before & after every
 
 `[1, 2, 3].reduce((pv, v) => pv + v, 0) === 6`
 
-### Stores
+### Store Configuration
 
-The `Mirror` configuration accepts:
+The `Mirror` configuration accepts `name`, `state()`, `mapToProps()` & `pure`.
 
-* `name` (_string_) - For querying stores
-* `state(mirror, dispatch)` (_function_) - Accepts a cursor & returns a state stream
-* `mapToProps(state, props)` (_function_) - Maps state to props. Useful when using, for example, Immutable.js
-* `pure` (_boolean_) - Avoids re-renders, state propagation, and calls to `mapToProps` if `true`
+##### `name`
 
-There are two lifecycle actions (no payload):
+For querying stores
+
+Stores can have multiple names, eg `Mirror({name: ['form', 'form/create-project']})`
+
+##### `state(mirror, dispatch)`
+
+Accepts a cursor & returns a state stream
+
+##### `mapToProps(state, props)`
+
+Maps state to props. Useful when using, for example, Immutable.js
+
+`mapToProps` can return a function. In this case, *that* function will be used as `mapToProps` for a particular component instance. This allows you to do per-instance memoization.
+
+##### `pure`
+
+Avoids re-renders, state propagation, and calls to `mapToProps` if `true`
+
+With `pure` enabled Mirror checks state & props equality with every update (shallow comparison). If either changes `mapToProps` is called. And if the value returned by `mapToProps` fails its equality check, the component re-renders.
+
+### Wrapping Up
+
+##### **Lifecycle Actions**
 
 * `INITIALIZE` - Dispatched when component mounts
 * `TEARDOWN` - Dispatched when component unmounts
 
-`Mirror` injects the state into your wrapped component, and these additional props:
+##### **Static Cursors**
 
-* `dispatch(type, payload)` - pushes values onto `$action` streams
-* `store` - a unique, (non-deterministic) ID for the store
+If no stores match a dispatch query, Mirror will wait until a store that *does* match the query mounts and then dispatch the action (disable by passing `false` as third argument)
 
-**Dispatching Actions**
-
-`dispatch` shares the cursor traversal API, allowing you to dispatch actions to any store in your app.
+Mirror components have a static cursor & dispatch API:
 
 ```js
-// dispatch an action to the local store
-dispatch('MY_ACTION', someValue)
+const MyWrappedComponent = Mirror()(MyComponent)
 
-// mark every "todo-item" in a "todo-list" as done
-dispatch.parent('todo-list').children('todo-item')('MARK_AS_DONE')
+MyComponent.mirror.$state // Combined state of every "MyComponent"
+MyComponent.dispatch('MY_ACTION') // Dispatched to first "MyComponent" to mount
+
+// Dispatched to every mounted "MyComponent" after app initializes
+MyComponent.mirror.root().$actions.filter(({type}) => type === 'INITIALIZATION_COMPLETE').take(1).observe(() => {
+  MyComponent.dispatch('MY_ACTION', undefined, false)
+})
 ```
 
-### API details
+##### `withName`
 
-`mapToProps` can return a function. In this case, *that* function will be used as `mapToProps` for a particular component instance. This allows you to do per-instance memoization.
+##### `getWrappedInstance`
 
 Access the wrapped component with `getWrappedInstance`:
 
@@ -211,27 +298,9 @@ Access the wrapped component with `getWrappedInstance`:
 />
 ```
 
-Stores can have multiple names, eg `Mirror({name: ['form', 'form/create-project']})`
-
-With `pure` enabled Mirror checks state & props equality with every update (shallow comparison). If either changes `mapToProps` is called. And if the value returned by `mapToProps` fails its equality check, the component re-renders.
+##### **Circular State Dependency**
 
 If you access a store's own `$state` stream via traversal (eg, `mirror.all().$state`) it will be replaced with an empty stream. Avoiding this circular dependency helps prevent infinite loops. If you really need a store's own `$state` stream you can use `mirror.$state` (no traversal)
-
-If no stores match a dispatch query, Mirror will wait until a store that *does* match the query mounts and then dispatch the action (disable by passing `false` as third argument)
-
-Mirror components have a static cursor & dispatch API:
-
-```js
-const MyWrappedComponent = Mirror()(MyComponent)
-
-MyComponent.$state // Combined state of every "MyComponent"
-MyComponent.dispatch('MY_ACTION') // Dispatched to first "MyComponent" to mount
-
-// Dispatched to every mounted "MyComponent" after app initializes
-MyComponent.root().$actions.filter(({type}) => type === 'INITIALIZATION_COMPLETE').take(1).tap(() => {
-  MyComponent.dispatch('MY_ACTION', undefined, false)
-})
-```
 
 ## Caveats
 
