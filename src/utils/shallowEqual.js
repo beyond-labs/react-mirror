@@ -6,7 +6,6 @@ export const shallowEqual = (a, b) => {
   let countA = 0;
   let countB = 0;
 
-  /* eslint-disable prefer-const */
   for (let key in a) {
     if (hasOwn.call(a, key) && a[key] !== b[key]) return false;
     countA++;
@@ -15,7 +14,6 @@ export const shallowEqual = (a, b) => {
   for (let key in b) {
     if (hasOwn.call(b, key)) countB++;
   }
-  /* eslint-enable prefer-const */
 
   return countA === countB;
 };

@@ -1,4 +1,23 @@
-import traverse from './traverseBreadthFirst';
+const isAction = action => {
+  if (
+    action &&
+    typeof action.type === 'string' &&
+    action.hasOwnProperty('payload') &&
+    typeof action.store === 'string'
+  ) {
+    return true;
+  }
+  return false;
+};
+
+const findAction = args => {
+  let i = args.length;
+  while (i--) {
+    if (isAction(args[i])) return args[i];
+    if (isAction(args[i].action)) return args[i].action;
+  }
+  return null;
+};
 
 const combineArrays = (arr1, arr2) => {
   const maxLength = Math.max(arr1.length, arr2.length);
@@ -9,20 +28,10 @@ const combineArrays = (arr1, arr2) => {
 export const handleActions = (handlers, ...defaultArgs) => (...args) => {
   args = combineArrays(args, defaultArgs);
 
-  let action;
-  traverse(
-    args,
-    (node, stop) => {
-      if (
-        node && typeof node.hasOwnProperty('type') && node.hasOwnProperty('payload') && typeof node.store === 'string'
-      ) {
-        action = node;
-        stop();
-      }
-    },
-    {reverse: true}
-  );
+  let action = findAction(args);
 
   if (!action || !handlers[action.type]) return args[0];
-  return handleActions[action.type](...args);
+  return handlers[action.type](...args);
 };
+
+export default handleActions;
