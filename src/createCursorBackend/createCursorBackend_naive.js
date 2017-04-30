@@ -4,7 +4,7 @@ const traverse = (tree, onVisit) => {
   while (q.length) {
     const node = q.shift();
     q.push(...node.children);
-    onVisit(node, () => (q = []));
+    onVisit(node);
   }
 };
 
@@ -83,7 +83,7 @@ export const createCursorBackend = () => {
         });
       });
       return results;
-    },
+    }
   };
 };
 

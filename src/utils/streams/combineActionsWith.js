@@ -1,4 +1,4 @@
-import {map, sample, combine, loop} from 'most';
+import {map, filter, sample, combine, loop} from 'most';
 
 const SKIP_TOKEN = '__MIRROR_SKIP_TOKEN__';
 
@@ -8,9 +8,9 @@ const combineActionsWithDefault = (actionStream, otherStream) => {
     ({prevAction, before}, {action, other: after}) => ({
       seed: {
         prevAction: action,
-        before: prevAction === action ? SKIP_TOKEN : after,
+        before: prevAction === action ? SKIP_TOKEN : after
       },
-      value: before === SKIP_TOKEN ? {before, action, after} : SKIP_TOKEN,
+      value: before === SKIP_TOKEN ? {before, action, after} : SKIP_TOKEN
     }),
     {},
     combinedStream
@@ -19,11 +19,7 @@ const combineActionsWithDefault = (actionStream, otherStream) => {
 };
 
 const combineActionsWithBefore = (actionStream, otherStream) => {
-  return sample(
-    (action, other) => ({before: other, action}),
-    actionStream,
-    otherStream
-  );
+  return sample((action, other) => ({before: other, action}), actionStream, otherStream);
 };
 
 const combineActionsWithAfter = (actionStream, otherStream) => {

@@ -16,4 +16,4 @@ export const combineNested = streamMap => {
   }, ...streams);
 };
 
-export default combine;
+export default combineNested;
