@@ -87,7 +87,7 @@ mirror.$actions
 mirror.children('todo-item').$state
 ```
 
-The `dispatch` cursor. `dispatch` is the second argument of `state`, it is also injected as a prop to decorated components. Call it like a function to dispatch an action.
+The `dispatch` cursor. `dispatch` is the second argument of `state`, it is also injected as a prop to decorated components. Call it like a function to dispatch actions.
 
 ```js
 dispatch('ACTION_TYPE', payload)
@@ -191,49 +191,55 @@ By comparison, `$stores` emits a value every time a store is added or removed. E
 
 #### **Combining Streams**
 
-Mirror exports four helpers (`combine`, `combineSimple`, `combineNested` & `combineActionsWith`) for combining streams together.
+Mirror exports four helpers (`combine`, `combineSimple`, `combineNested` & `combineActionsWith`) for combining streams together. I've used plain objects in these examples for clarity; only streams work in practice, each value in the resulting stream matches the following patterns.
+
+##### `combine`
 
 Use `combine` to combine multiple state streams, or multiple prop streams.
 
 ```js
-import {combine} from 'react-mirror'
-
 combine(
-  mirror.children('field/title', 1).$state,
-  mirror.children('field/description', 1).$state
+  Enum({a: stateA}, {b: stateB}),
+  Enum({a: stateA}, {c: stateC}),
 )
+
+// Enum({a: stateA, b: stateB, c: stateC})
 ```
+
+##### `combineNested`
 
 Use `combineNested` to combine state & prop streams together.
 
 ```js
-import {combine, combineSimple, combineNested} from 'react-mirror'
+combineNested({
+  state: Enum({a: stateA, b: stateB})
+  props: Enum({a: propsA})
+})
 
-combineSimple(
-  mirror.$stores.take(1).map(({selected}) => selected),
-  combineNested({
-    state: combine(
-      mirror.$state,
-      mirror.children('field').$state
-    ),
-    props: mirror.$props
-  })
-)
-
-combineStateWithProps(
-  mirror.children('field').$state,
-  mirror.$props
-).take(1).tap(::console.log)
-
-// Enum([{state: undefined, props}, ...{state, props}], 'state.store')
+// Enum({a: {state: stateA, props: propsA}, b: {state: stateB}})
 ```
 
-#### **Combining Actions with State**
+#### `combineSimple`
 
+```js
+combineSimple(
+  'a',
+  Enum({a: stateA, b: stateB})
+)
 
-Print out the state before & after every
+// ['a', Enum({a: stateA, b: stateB})]
+```
 
-`[1, 2, 3].reduce((pv, v) => pv + v, 0) === 6`
+#### `combineActionsWith`
+
+```js
+combineActionsWith(
+  {type: 'ACTION_TYPE', payload, store},
+  Enum({a: stateA})
+)
+
+// {action, before: stateBeforeAction, after: stateAfterAction}
+```
 
 ### Store Configuration
 
