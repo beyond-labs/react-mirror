@@ -94,6 +94,8 @@ dispatch('ACTION_TYPE', payload)
 dispatch.parent('todo-list')('ACTION_TYPE', payload)
 ```
 
+If nothing matches the `dispatch` cursor Mirror will wait until something does - and then dispatch the action.
+
 ### Working with streams
 
 Streams are basically arrays of events. You can map, reduce, combine, and do [all sorts of cool things](www.rxmarbles.com) with them. `state` returns a stream - the first value represents the store's state when it's initialized, and the last value in the stream represents the store's current state. This section describes some patterns for creating, and using streams with Mirror.
@@ -178,7 +180,7 @@ Every value in a state / prop stream is an `Enum`. That's an array with object-l
 
 ```js
 stores = Enum({
-  oigkzfajky: {value: 8}
+  oigkzfajky: {title: 'Permutation City'}
 })
 
 stores[0] === stores['oigkzfajky']
@@ -195,7 +197,7 @@ By comparison, `$stores` emits a value every time a store is added or removed. E
     id: 'oigkzfajky',
     name: 'counter'
     component: Counter,
-    selection: [], // aggregated
+    selection: [], // aggregated from $props / $state / $actions
     children: [/* ... */],
     parent: /* ... */
   }
@@ -208,7 +210,7 @@ Mirror exports four helpers (`combine`, `combineSimple`, `combineNested` & `comb
 
 ##### `combine`
 
-`combine` joins two or more enum streams into a single enum stream, & removes duplicates. Use combine to combine multiple state streams, or multiple prop streams.
+`combine` joins enums together, & removes duplicates. Use `combine` to join multiple state streams, or multiple prop streams.
 
 ```js
 combine(
@@ -221,7 +223,7 @@ combine(
 
 ##### `combineNested`
 
-Use `combineNested` to combine state & prop streams together.
+`combineNested` inverts an object of enums, creating a single enum whose values match the given argument. Use `combineNested` to join state & prop streams together.
 
 ```js
 combineNested({
@@ -234,6 +236,8 @@ combineNested({
 
 ##### `combineSimple`
 
+`combineSimple` joins each value into an array. Use `combineSimple` to merge different kinds of streams together, like a cursor selection & state stream.
+
 ```js
 combineSimple(
   'a',
@@ -245,14 +249,19 @@ combineSimple(
 
 ##### `combineActionsWith`
 
+`combineActionsWith` joins a stream of actions with the value before & after that action from another stream.
+
 ```js
 combineActionsWith(
   {type: 'ACTION_TYPE', payload, store},
-  Enum({a: stateA})
+  Enum({a: stateA}),
+  {before: true, after: true}
 )
 
 // {action, before: stateBeforeAction, after: stateAfterAction}
 ```
+
+The `options` argument defaults to `{before: true, after: true}`. Pass `{before: true, after: false}` if you need access to the last value before the other stream emits an `after` (you probably don't).
 
 ### Store Configuration
 
