@@ -174,20 +174,33 @@ a--------b---c----------->
 a1--a2---b2--c2-----c3--->
 ```
 
-Every values in a state / prop stream is an `Enum`. That's an array with object-like properties for each value.
+Every value in a state / prop stream is an `Enum`. That's an array with object-like properties for each value.
 
 ```js
-stores = Enum(
-  [{store: 'oigkzfajky', value: 0}],
-  'store'
-)
+stores = Enum({
+  oigkzfajky: {value: 8}
+})
 
 stores[0] === stores['oigkzfajky']
 ```
 
 ##### `$stores`
 
-By comparison, `$stores` emits a value every time a store is added or removed. Each value has a `selection` (array of store IDs) & `tree` (structured metadata).
+By comparison, `$stores` emits a value every time a store is added or removed. Each value contains the cursor `selection` (array of store IDs) & `tree` (structural metadata with reference to local store).
+
+```js
+{
+  selection: ['oigkzfajky']
+  tree: {
+    id: 'oigkzfajky',
+    name: 'counter'
+    component: Counter,
+    selection: [], // aggregated
+    children: [/* ... */],
+    parent: /* ... */
+  }
+}
+```
 
 #### **Combining Streams**
 
@@ -195,7 +208,7 @@ Mirror exports four helpers (`combine`, `combineSimple`, `combineNested` & `comb
 
 ##### `combine`
 
-Use `combine` to combine multiple state streams, or multiple prop streams.
+`combine` joins two or more enum streams into a single enum stream, & removes duplicates. Use combine to combine multiple state streams, or multiple prop streams.
 
 ```js
 combine(
@@ -219,7 +232,7 @@ combineNested({
 // Enum({a: {state: stateA, props: propsA}, b: {state: stateB}})
 ```
 
-#### `combineSimple`
+##### `combineSimple`
 
 ```js
 combineSimple(
@@ -230,7 +243,7 @@ combineSimple(
 // ['a', Enum({a: stateA, b: stateB})]
 ```
 
-#### `combineActionsWith`
+##### `combineActionsWith`
 
 ```js
 combineActionsWith(
