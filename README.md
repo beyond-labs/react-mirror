@@ -94,7 +94,7 @@ dispatch('ACTION_TYPE', payload)
 dispatch.parent('todo-list')('ACTION_TYPE', payload)
 ```
 
-If nothing matches the `dispatch` cursor Mirror will wait until something does - and then dispatch the action.
+If nothing matches the `dispatch` cursor Mirror will wait until something does - and then dispatch the action. Disable this behaviour by passing `false` as the third argument.
 
 ### Working with streams
 
@@ -265,29 +265,50 @@ The `options` argument defaults to `{before: true, after: true}`. Pass `{before:
 
 ### Store Configuration
 
-The `Mirror` configuration accepts `name`, `state()`, `mapToProps()` & `pure`.
+The `Mirror` configuration accepts `name`, `state()`, `mapToProps()` & `pure`. Every property is optional.
 
 ##### `name`
 
-For querying stores
+Mirror uses `name` inside filters. `name` is a string, or array of strings.
 
-Stores can have multiple names, eg `Mirror({name: ['form', 'form/create-project']})`
+The static `withName` method lets you add additional names to a store. `withName` is useful for distinguishing particular instances of a component.
+
+```js
+const Form = Mirror({
+  name: 'form',
+  /* ... */
+})(/* ... */)
+
+const CreateProjectForm = Form.withName('form/create-project')
+```
+
+Although `withName` creates a new component, cursor behaviour isn't affected when passing a component as the filter.
 
 ##### `state(mirror, dispatch)`
 
-Accepts a cursor & returns a state stream
+Called when the store mounts, and returns the instance's state stream. Mirror derives props from the latest value in the state stream, and injects those props into the wrapped component. Other stores can read (a filtered version of) the state stream.
+
+If provided, the wrapped component only renders once the state stream emits it's first value.
 
 ##### `mapToProps(state, props)`
 
-Maps state to props. Useful when using, for example, Immutable.js
+Accepts the current state & parent props, and returns props to inject into the wrapped component. Called whenever state or props change; and useful when using, for example, Immutable.js.
 
-`mapToProps` can return a function. In this case, *that* function will be used as `mapToProps` for a particular component instance. This allows you to do per-instance memoization.
+Note that any props not handled by `mapToProps()` will be ignore.
+
+`mapToProps()` can return a function. In this case, *that* function will be used as `mapToProps()` for a particular component instance. This allows you to do per-instance memoization.
 
 ##### `pure`
 
-Avoids re-renders, state propagation, and calls to `mapToProps` if `true`
+If `true`, avoids unnecessary computation:
 
-With `pure` enabled Mirror checks state & props equality with every update (shallow comparison). If either changes `mapToProps` is called. And if the value returned by `mapToProps` fails its equality check, the component re-renders.
+* Only emit props / state changes if either changed
+* Only call `mapToProps` if props / state changed
+* Only re-render if value returned by `mapToProps` changed
+
+The equality check is based on `shallowEqual`. You can alternatively provide an object with three functions (`stateEqual`, `propsEqual`, `statePropsEqual`) which accept the previous and current props / state.
+
+If disabled (by passing a falsey value), Mirror will re-render the wrapped component on every state / prop change.
 
 ### Wrapping Up
 
@@ -313,8 +334,6 @@ MyComponent.mirror.root().$actions.filter(({type}) => type === 'INITIALIZATION_C
   MyComponent.dispatch('MY_ACTION', undefined, false)
 })
 ```
-
-#### `withName`
 
 #### `getWrappedInstance`
 
