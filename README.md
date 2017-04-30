@@ -51,7 +51,7 @@ Stores can dispatch actions to, and query, (the action/state streams of) any oth
 
 Cursors point to a collection of stores, relative to another store. eg, "every `Todo` which is a child of this store (a `TodoList`)"
 
-##### **Examples**
+#### **Examples**
 
 ```js
 mirror                     // Local store
@@ -64,7 +64,7 @@ mirror.all('todo-list').children('todo-item')          // Every "todo-item" insi
 mirror.one('todo-list/shopping').children('todo-item') // Every "todo-item" inside "todo-list/shopping"
 ```
 
-##### **Methods**
+#### **Methods**
 
 `filter` can be a store ID, name or component.
 
@@ -78,7 +78,7 @@ one(filter)            // Same as `all(filter, 1)`
 parent(filter)         // Same as `parents(filter, 1)`
 ```
 
-##### **Two types of cursor**
+#### **Two types of cursor**
 
 The `mirror` cursor. `mirror` is the first argument of `state`, it has four getters (`$props`, `$state`, `$actions` & `$stores`) for querying selected stores.
 
@@ -100,7 +100,7 @@ Streams are basically arrays of events. You can map, reduce, combine, and do [al
 
 Mirror uses [most.js](https://github.com/cujojs/most) (it's really fast). But you can use any streaming library that supports the `Observable` API like RxJS or XStream.
 
-##### **Scanning actions**
+#### **Scanning actions**
 
 Every action has a `type`, `payload` & `store` (id). Scanning actions means applying them to the current state one-by-one to produce new state.
 
@@ -120,7 +120,7 @@ handleActions({
 }, 0)
 ```
 
-##### **Effects**
+#### **Effects**
 
 For every value in a stream, `tap` calls a function & ignores the result.
 
@@ -143,7 +143,7 @@ $actions
   .scan(/* ... */);
 ```
 
-##### **Multi-Store Streams**
+#### **Multi-Store Streams**
 
 Streams taken from `mirror` contain values from multiple stores. Mirror will `merge` actions & `combine` state / props.
 
@@ -189,7 +189,7 @@ stores[0] === stores['oigkzfajky']
 
 By comparison, `$stores` emits a value every time a store is added or removed. Each value has a `selection` (array of store IDs) & `tree` (structured metadata).
 
-##### **Combining Streams**
+#### **Combining Streams**
 
 Mirror exports four helpers (`combine`, `combineSimple`, `combineNested` & `combineActionsWith`) for combining streams together.
 
@@ -228,7 +228,7 @@ combineStateWithProps(
 // Enum([{state: undefined, props}, ...{state, props}], 'state.store')
 ```
 
-##### **Combining Actions with State**
+#### **Combining Actions with State**
 
 
 Print out the state before & after every
@@ -263,12 +263,12 @@ With `pure` enabled Mirror checks state & props equality with every update (shal
 
 ### Wrapping Up
 
-##### **Lifecycle Actions**
+#### **Lifecycle Actions**
 
 * `INITIALIZE` - Dispatched when component mounts
 * `TEARDOWN` - Dispatched when component unmounts
 
-##### **Static Cursors**
+#### **Static Cursors**
 
 If no stores match a dispatch query, Mirror will wait until a store that *does* match the query mounts and then dispatch the action (disable by passing `false` as third argument)
 
@@ -286,9 +286,9 @@ MyComponent.mirror.root().$actions.filter(({type}) => type === 'INITIALIZATION_C
 })
 ```
 
-##### `withName`
+#### `withName`
 
-##### `getWrappedInstance`
+#### `getWrappedInstance`
 
 Access the wrapped component with `getWrappedInstance`:
 
@@ -298,7 +298,7 @@ Access the wrapped component with `getWrappedInstance`:
 />
 ```
 
-##### **Circular State Dependency**
+#### **Circular State Dependency**
 
 If you access a store's own `$state` stream via traversal (eg, `mirror.all().$state`) it will be replaced with an empty stream. Avoiding this circular dependency helps prevent infinite loops. If you really need a store's own `$state` stream you can use `mirror.$state` (no traversal)
 
