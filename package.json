@@ -3,13 +3,11 @@
   "version": "0.3.4",
   "description": "Fractal state management for react",
   "keywords": [
+    "react",
     "mirror",
     "fractal",
     "state",
-    "state management",
-    "predictable",
-    "functional",
-    "immutable",
+    "stream",
     "flux",
     "view controller"
   ],
