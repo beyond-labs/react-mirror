@@ -236,7 +236,7 @@ combineNested({
 
 ##### `combineSimple`
 
-`combineSimple` joins each value into an array. Use `combineSimple` to merge different kinds of streams together, like a cursor selection & state stream.
+`combineSimple` joins each value into an array. Use `combineSimple` to join different kinds of streams together, like a cursor selection & state stream.
 
 ```js
 combineSimple(
