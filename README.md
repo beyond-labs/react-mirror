@@ -369,9 +369,35 @@ This doesn't apply to static cursors.
 
 ## Caveats
 
-Prop race conditions
+Mirror makes it easy to build predictable applications. But things go wrong sometimes. This section will help you avoid things going wrong.
 
-Stores might not be mounted
+#### **Transitive Updates**
+
+Mirror cannot guarantee the order stores are updated in, or the order of prop changes. Except for when handling actions `state` should be transitive, for example:
+
+1. `state` is subscribed to multiple state / props streams
+2. These streams emit some values in a random order
+3. The state stream's last value should be the same after every run
+
+If `state` is not transitive then dispatching an action with cascading effects can cause race conditions / unpredictable state. Tips to keep `state` transitive:
+
+* Streams that depend on actions-only are always transitive
+* Reduce state from multiple sources to a single value
+* Prefer `mapToProps` over using `$props` inside `state`
+* Props which never change are safe to use inside `state`
+
+#### **Uninitialized Stores**
+
+Because:
+
+1. Mirror cannot guarantee the order stores are initialized in
+2. Stores are dynamically added / removed at runtime
+
+Actions might not be dispatched to every store they're intended for consistently. Mirror [behaves consistently](https://github.com/beyond-labs/react-mirror/tree/rewrite#two-types-of-cursor) when `dispatch` can be guaranteed to match one store only, but problems may arise when dispatching actions to a dynamic collection of stores. Tips to alleviate these problems:
+
+* Avoid dispatching actions to collections as part of an effect
+* Dispatching actions as part of asynchronous user interaction is safe
+* Use container stores if children have reactive dependencies
 
 ## Thanks
 
