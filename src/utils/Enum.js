@@ -8,14 +8,14 @@ export class Enum extends Array {
   }
   map(f) {
     const obj = {}
-    this.forEach((value, index, key, arr) => {
+    this.forEach(function map(value, index, key, arr) {
       obj[key] = f(value, index, key, arr)
     })
     return new Enum(obj)
   }
   filter(f) {
     const obj = {}
-    this.forEach((value, index, key, arr) => {
+    this.forEach(function filter(value, index, key, arr) {
       if (f(value, index, key, arr)) {
         obj[key] = value
       }
@@ -23,29 +23,39 @@ export class Enum extends Array {
     return new Enum(obj)
   }
   forEach(f) {
-    return super.forEach((value, index, arr) => f(value, index, this.keys[index], arr))
+    return super.forEach(function forEach(value, index, arr) {
+      return f(value, index, this.keys[index], arr)
+    })
   }
   every(f) {
-    return super.every((value, index, arr) => f(value, index, this.keys[index], arr))
+    return super.every(function every(value, index, arr) {
+      return f(value, index, this.keys[index], arr)
+    })
   }
   find(f) {
-    return super.find((value, index, arr) => f(value, index, this.keys[index], arr))
+    return super.find(function find(value, index, arr) {
+      return f(value, index, this.keys[index], arr)
+    })
   }
   findIndex(f) {
-    return super.findIndex((value, index, arr) => f(value, index, this.keys[index], arr))
+    return super.findIndex(function findIndex(value, index, arr) {
+      return f(value, index, this.keys[index], arr)
+    })
   }
   some(f) {
-    return super.some((value, index, arr) => f(value, index, this.keys[index], arr))
+    return super.some(function some(value, index, arr) {
+      return f(value, index, this.keys[index], arr)
+    })
   }
   reduce(f) {
-    return super.reduce((prev, value, index, arr) =>
-      f(prev, value, index, this.keys[index], arr)
-    )
+    return super.reduce(function reduce(prev, value, index, arr) {
+      return f(prev, value, index, this.keys[index], arr)
+    })
   }
   reduceRight(f) {
-    return super.reduceRight((prev, value, index, arr) =>
-      f(prev, value, index, this.keys[index], arr)
-    )
+    return super.reduceRight(function reduceRight(prev, value, index, arr) {
+      return f(prev, value, index, this.keys[index], arr)
+    })
   }
 }
 
