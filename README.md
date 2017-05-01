@@ -393,7 +393,7 @@ Because:
 1. Mirror cannot guarantee the order stores are initialized in
 2. Stores are dynamically added / removed at runtime
 
-Actions might not be dispatched to every store they're intended for consistently. Mirror [behaves consistently](https://github.com/beyond-labs/react-mirror/tree/rewrite#two-types-of-cursor) when `dispatch` can be guaranteed to match one store only, but problems may arise when dispatching actions to a dynamic collection of stores. Tips to alleviate these problems:
+Actions might not be dispatched to every store they're intended for consistently. Mirror behaves consistently when `dispatch` can be guaranteed to match one store only, but problems may arise when dispatching actions to a dynamic collection of stores. Tips to alleviate these problems:
 
 * Avoid dispatching actions to collections as part of an effect
 * Dispatching actions as part of asynchronous user interaction is safe
