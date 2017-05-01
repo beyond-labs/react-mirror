@@ -282,7 +282,7 @@ const Form = Mirror({
 const CreateProjectForm = Form.withName('form/create-project')
 ```
 
-Although `withName` creates a new component, cursor behaviour isn't affected when passing a component as the filter.
+Although `withName` creates a new component itself, cursor behaviour isn't affected when passing a component as the filter.
 
 ##### `state(mirror, dispatch)`
 
