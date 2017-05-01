@@ -294,7 +294,7 @@ If provided, the wrapped component only renders once the state stream emits it's
 
 Accepts the current state & parent props, and returns props to inject into the wrapped component. Called whenever state or props change; and useful when using, for example, Immutable.js.
 
-Note that any props not handled by `mapToProps()` will be ignore.
+Note that Mirror ignores parent props not handled by `mapToProps()`.
 
 `mapToProps()` can return a function. In this case, *that* function will be used as `mapToProps()` for a particular component instance. This allows you to do per-instance memoization.
 
@@ -314,40 +314,58 @@ If disabled (by passing a falsey value), Mirror will re-render the wrapped compo
 
 #### **Lifecycle Actions**
 
-* `INITIALIZE` - Dispatched when component mounts
-* `TEARDOWN` - Dispatched when component unmounts
+Mirror dispatches `INITIALIZE` to stores when they're created, and `TEARDOWN` immediately before they unmount.
 
 #### **Static Cursors**
 
-If no stores match a dispatch query, Mirror will wait until a store that *does* match the query mounts and then dispatch the action (disable by passing `false` as third argument)
-
-Mirror components have a static cursor & dispatch API:
+Each component exposes `mirror` & `dispatch` as static cursors.
 
 ```js
-const MyWrappedComponent = Mirror()(MyComponent)
+const MyComponent = Mirror({
+  /* ... */
+})(/* ... */);
 
-MyComponent.mirror.$state // Combined state of every "MyComponent"
-MyComponent.dispatch('MY_ACTION') // Dispatched to first "MyComponent" to mount
+MyComponent.mirror; // Every "MyComponent"
+MyComponent.dispatch('MY_ACTION'); // First "MyComponent" to mount
 
-// Dispatched to every mounted "MyComponent" after app initializes
-MyComponent.mirror.root().$actions.filter(({type}) => type === 'INITIALIZATION_COMPLETE').take(1).observe(() => {
-  MyComponent.dispatch('MY_ACTION', undefined, false)
-})
+// Every mounted "MyComponent" after "INITIALIZATION_COMPLETE"
+MyComponent.mirror
+  .root()
+  .$actions.filter(({type}) => type === 'INITIALIZATION_COMPLETE')
+  .take(1)
+  .observe(() => {
+    MyComponent.dispatch('MY_ACTION', undefined, false);
+  });
 ```
 
-#### `getWrappedInstance`
+#### **Instance Properties**
 
-Access the wrapped component with `getWrappedInstance`:
+##### `getWrappedInstance`
+
+Access the wrapped component instance with `this.getWrappedInstance()`.
+
+##### Cursors
+
+`mirror` & `dispatch` can be accessed via `this.mirror` / `this.dispatch`. This is potentially dangerous, and provided as an escape hatch only.
+
+There's also a `raw` cursor for querying store instances; `raw` might be helpful if you're extending Mirror. It triggers a callback whenever the cursor selection changes.
 
 ```js
-<MyWrappedComponent
-  ref={ref => ref.getWrappedInstance().constructor === MyComponent}
-/>
+this.raw.children('todo-item')((todoItemInstances) => /* ... */)
 ```
 
 #### **Circular State Dependency**
 
-If you access a store's own `$state` stream via traversal (eg, `mirror.all().$state`) it will be replaced with an empty stream. Avoiding this circular dependency helps prevent infinite loops. If you really need a store's own `$state` stream you can use `mirror.$state` (no traversal)
+The `mirror` cursor omits local state that's part of a query (eg, `mirror.all().$state`). Avoiding this circular dependency avoids infinite rendering loops. If you really want this access `$state` directly without any traversal.
+
+```js
+combine(
+  mirror.$state,
+  mirror.all().$state
+)
+```
+
+This doesn't apply to static cursors.
 
 ## Caveats
 
