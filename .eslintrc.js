@@ -8,9 +8,10 @@ module.exports = {
   rules: {
     indent: ['warn', 2],
     'max-len': ['warn', 90],
-    semi: ['warn', 'always'],
+    semi: ['warn', 'never'],
+    'no-unexpected-multiline': 'warn',
     quotes: ['warn', 'single'],
     'comma-dangle': ['warn', 'never'],
     'object-curly-spacing': ['warn', 'never']
   }
-};
+}

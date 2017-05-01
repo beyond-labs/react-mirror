@@ -16,23 +16,24 @@ import Mirror from 'react-mirror'
 const Counter = Mirror({
   name: 'counter',
   state(mirror, dispatch) {
-    return mirror.$actions.fold(({value}, {type, payload = 1}) => {
-      switch (type) {
-        case 'INCREMENT': return {value: value + payload}
-        case 'DECREMENT': return {value: value - payload}
-        default: return {value}
-      }
-    }, {value: 0})
+    return mirror.$actions.scan(
+      ({value}, {type, payload = 1}) => {
+        switch (type) {
+          case 'INCREMENT': return {value: value + payload}
+          case 'DECREMENT': return {value: value - payload}
+          default: return {value}
+        }
+      },
+      {value: 0}
+    )
   }
-})(
-  ({value, dispatch}) => (
-    <div>
-      Value: {value}
-      <button onClick={() => dispatch('INCREMENT')}>+</button>
-      <button onClick={() => dispatch('DECREMENT')}>-</button>
-    </div>
-  )
-)
+})(({value, dispatch}) => (
+  <div>
+    Value: {value}
+    <button onClick={() => dispatch('INCREMENT')}>+</button>
+    <button onClick={() => dispatch('DECREMENT')}>-</button>
+  </div>
+))
 ```
 
 ## Rationale
@@ -118,7 +119,7 @@ import {handleActions} from 'react-mirror'
 
 handleActions({
   INCREMENT(value) { return value + 1; },
-  DECREMENT(value) { return value - 1; },
+  DECREMENT(value) { return value - 1; }
 }, 0)
 ```
 
@@ -133,16 +134,16 @@ $actions
   .tap(
     handleActions({
       INITIALIZE() {
-        dispatch('LOAD_DATA');
+        dispatch('LOAD_DATA')
       },
       LOAD_DATA() {
         loadData()
           .then(data => dispatch('LOAD_DATA_SUCCESS', data))
-          .catch(error => dispatch('LOAD_DATA_FAILURE', error));
-      },
+          .catch(error => dispatch('LOAD_DATA_FAILURE', error))
+      }
     })
   )
-  .scan(/* ... */);
+  .scan(/* ... */)
 ```
 
 #### **Multi-Store Streams**
@@ -215,7 +216,7 @@ Mirror exports four helpers (`combine`, `combineSimple`, `combineNested` & `comb
 ```js
 combine(
   Enum({a: stateA}, {b: stateB}),
-  Enum({a: stateA}, {c: stateC}),
+  Enum({a: stateA}, {c: stateC})
 )
 
 // Enum({a: stateA, b: stateB, c: stateC})
@@ -227,7 +228,7 @@ combine(
 
 ```js
 combineNested({
-  state: Enum({a: stateA, b: stateB})
+  state: Enum({a: stateA, b: stateB}),
   props: Enum({a: propsA})
 })
 
@@ -323,10 +324,10 @@ Each component exposes `mirror` & `dispatch` as static cursors.
 ```js
 const MyComponent = Mirror({
   /* ... */
-})(/* ... */);
+})(/* ... */)
 
-MyComponent.mirror; // Every "MyComponent"
-MyComponent.dispatch('MY_ACTION'); // First "MyComponent" to mount
+MyComponent.mirror // Every "MyComponent"
+MyComponent.dispatch('MY_ACTION') // First "MyComponent" to mount
 
 // Every mounted "MyComponent" after "INITIALIZATION_COMPLETE"
 MyComponent.mirror
@@ -334,8 +335,8 @@ MyComponent.mirror
   .$actions.filter(({type}) => type === 'INITIALIZATION_COMPLETE')
   .take(1)
   .observe(() => {
-    MyComponent.dispatch('MY_ACTION', undefined, false);
-  });
+    MyComponent.dispatch('MY_ACTION', undefined, false)
+  })
 ```
 
 #### **Instance Properties**
