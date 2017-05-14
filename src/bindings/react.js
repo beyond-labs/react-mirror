@@ -1,8 +1,8 @@
+import most from 'most'
 import {Component, createElement} from 'react'
 import MirrorBackend from '../backend'
 import shallowEqual from '../utils/shallowEqual'
 import filterUnchanged from '../utils/streams/filterUnchanged'
-import {combine, from, until} from 'most'
 
 const instantiseMapToProps = mapToProps => {
   let CALLED_ONCE
@@ -52,7 +52,7 @@ function createMirrorDecorator(config = {}) {
             yield new Promise(resolve => (this.onReceivedProps = resolve))
           }
         }
-        const $stateEnd = from(new Promise(resolve => (this.onStateEnd = resolve)))
+        const $stateEnd = most.from(new Promise(resolve => (this.onStateEnd = resolve)))
 
         const {id, mirror, dispatch, streams} = MirrorBackend.addStore(context.id, {
           requesting: ['$state', '$props'],
@@ -60,12 +60,12 @@ function createMirrorDecorator(config = {}) {
           streams: (mirror, dispatch) => {
             const $props = filterUnchanged(
               pure.propsEqual.bind(this),
-              from(this.propsRecievedGenerator)
+              most.from(this.propsRecievedGenerator)
             )
             if (!state) return {$props}
-            let $state = filterUnchanged(
-              pure.stateEqual.bind(this),
-              until($stateEnd, state.call(this, mirror, dispatch))
+            let $state = filterUnchanged(pure.stateEqual.bind(this)).until(
+              $stateEnd,
+              state.call(this, mirror, dispatch)
             )
             return {$state, $props}
           },
@@ -77,7 +77,7 @@ function createMirrorDecorator(config = {}) {
 
         filterUnchanged(
           pure.propsStateEqual.bind(this),
-          combine(
+          most.combine(
             instantiseMapToProps(mapToProps).bind(this),
             streams.$state,
             streams.$props

@@ -1,36 +1,36 @@
-import {map, filter, sample, combine, loop} from 'most'
+import most from 'most'
 
 const SKIP_TOKEN = '__MIRROR_SKIP_TOKEN__'
 
 const combineActionsWithDefault = (actionStream, otherStream) => {
-  let combinedStream = combine((action, other) => ({action, other}))
-  combinedStream = loop(
-    ({prevAction, before}, {action, other: after}) => ({
-      seed: {
-        prevAction: action,
-        before: prevAction === action ? SKIP_TOKEN : after
-      },
-      value: before === SKIP_TOKEN ? {before, action, after} : SKIP_TOKEN
-    }),
-    {},
-    combinedStream
-  )
-  return filter(value => value !== SKIP_TOKEN, combinedStream)
+  return most
+    .combine((action, other) => ({action, other}))
+    .loop(
+      ({prevAction, before}, {action, other: after}) => ({
+        seed: {
+          prevAction: action,
+          before: prevAction === action ? SKIP_TOKEN : after
+        },
+        value: before === SKIP_TOKEN ? {before, action, after} : SKIP_TOKEN
+      }),
+      {}
+    )
+    .filter(value => value !== SKIP_TOKEN)
 }
 
 const combineActionsWithBefore = (actionStream, otherStream) => {
-  return sample((action, other) => ({before: other, action}), actionStream, otherStream)
+  return actionStream.sample((action, other) => ({before: other, action}), otherStream)
 }
 
 const combineActionsWithAfter = (actionStream, otherStream) => {
-  map(value => {
+  return combineActionsWithDefault(actionStream, otherStream).map(value => {
     delete value.before
     return value
-  }, combineActionsWithDefault(actionStream, otherStream))
+  })
 }
 
 const combineActionsWithNothing = actionStream => {
-  return map(actionStream, action => ({action}))
+  return actionStream.map(action => ({action}))
 }
 
 export const combineActionsWith = (

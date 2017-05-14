@@ -1,10 +1,10 @@
-import {combine as combineMost} from 'most'
+import most from 'most'
 import Enum from '../Enum'
 
 export const combineNested = streamMap => {
   const keys = Object.keys(streamMap)
   const streams = keys.map(key => streamMap[key])
-  return combineMost((...enumCollection) => {
+  return most.combine((...enumCollection) => {
     const result = {}
     enumCollection.forEach(_enum_ => {
       _enum_.forEach((value, i, key) => {

@@ -1,9 +1,9 @@
 import most from 'most'
 import createCursorBackend from '../cursor'
-import createCursorAPI from '../utils/createCursorAPI'
-import generateStoreId, {couldBeStoreId} from '../utils/generateStoreId'
-import {filterUnchangedKeyArrays} from '../utils/filterUnchanged'
 import combine from '../utils/combine'
+import createCursorAPI from '../utils/createCursorAPI'
+import {filterUnchangedKeyArrays} from '../utils/filterUnchanged'
+import generateStoreId, {couldBeStoreId} from '../utils/generateStoreId'
 
 export const createMirrorBackend = () => {
   let root
