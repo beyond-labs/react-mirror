@@ -4,6 +4,20 @@ import shallowEqual from '../utils/shallowEqual'
 import filterUnchanged from '../utils/streams/filterUnchanged'
 import {combine, from, until} from 'most'
 
+const instantiseMapToProps = mapToProps => {
+  let CALLED_ONCE
+  const instantisedMapToProps = (state, props) => {
+    let result = mapToProps(state, props)
+    if (!CALLED_ONCE && typeof result === 'function') {
+      mapToProps = result
+      result = mapToProps(state, props)
+    }
+    CALLED_ONCE = true
+    return result
+  }
+  return instantisedMapToProps
+}
+
 function createMirrorDecorator(config = {}) {
   return function decorateWithMirror(WrappedComponent) {
     let {name = [], state, mapToProps, pure} = config
@@ -38,7 +52,7 @@ function createMirrorDecorator(config = {}) {
             yield new Promise(resolve => (this.onReceivedProps = resolve))
           }
         }
-        const stateEndStream = from(new Promise(resolve => (this.onStateEnd = resolve)))
+        const $stateEnd = from(new Promise(resolve => (this.onStateEnd = resolve)))
 
         const {id, mirror, dispatch, streams} = MirrorBackend.addStore(context.id, {
           requesting: ['$state', '$props'],
@@ -51,7 +65,7 @@ function createMirrorDecorator(config = {}) {
             if (!state) return {$props}
             let $state = filterUnchanged(
               pure.stateEqual.bind(this),
-              until(stateEndStream, state.call(this, mirror, dispatch))
+              until($stateEnd, state.call(this, mirror, dispatch))
             )
             return {$state, $props}
           },
@@ -63,7 +77,11 @@ function createMirrorDecorator(config = {}) {
 
         filterUnchanged(
           pure.propsStateEqual.bind(this),
-          combine(mapToProps.bind(this), streams.$state, streams.$props)
+          combine(
+            instantiseMapToProps(mapToProps).bind(this),
+            streams.$state,
+            streams.$props
+          )
         ).observe(propsState => {
           this.setState(({updateCount}) => ({updateCount: updateCount + 1, propsState}))
         })
@@ -135,7 +153,7 @@ function createMirrorDecorator(config = {}) {
     const withNameCache = Mirror.__COMPONENT_IDENTIFIER__.__WITH_NAME_CACHE__
     Mirror.withName = function withName(...name) {
       name = [].concat(...name, config.name).sort()
-      const key = JSON.stringify(name) // TODO: replace with Map to support non-string names
+      const key = JSON.stringify(name) // TODO: support non-string names
       if (withNameCache[key]) return withNameCache[key]
 
       const renamedComponent = createMirrorDecorator({...config, name})(WrappedComponent)

@@ -262,7 +262,7 @@ combineActionsWith(
 // {action, before: stateBeforeAction, after: stateAfterAction}
 ```
 
-The `options` argument defaults to `{before: true, after: true}`. Pass `{before: true, after: false}` if you need access to the last value before the other stream emits an `after` (you probably don't).
+The `options` argument defaults to `{before: true, after: true}`. Pass `{before: true, after: false}` if you need access to the last action before the other stream emits an `after` (you probably don't).
 
 ### Store Configuration
 

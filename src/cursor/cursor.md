@@ -52,21 +52,18 @@ cursorBackend.updateNode(/* ... */) // add first field
 const queries = cursorBackend.updateNode(
   {
     id: 'oigkzfajky',
-    identifiers: ['root'],
-    component: Root,
+    identifiers: ['root', Root],
     queries: [
       [{op: 'children', filter: 'form', maxStores: 1}, {op: 'children', filter: 'field', maxStores: Infinity}]
     ],
     children: [
       {
         id: 'hsmfbtmqka'
-        identifiers: ['form', 'form/create-project'],
-        component: Form,
+        identifiers: ['form', 'form/create-project', Form],
         children: [
           {
             id: 'renxqnmjjk',
-            identifiers: ['field', 'field/title'],
-            component: Input
+            identifiers: ['field', 'field/title', Input],
             queries: [
               [{op: 'root'}, {op: 'children', filter: Form, maxStores: 1}]
             ]
@@ -74,8 +71,7 @@ const queries = cursorBackend.updateNode(
           },
           {
             id: 'ljejmzqowf',
-            identifiers: ['field', 'field/description'],
-            component: Input
+            identifiers: ['field', 'field/description', Input],
             children: []
           }
         ]

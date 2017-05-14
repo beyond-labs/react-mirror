@@ -31,6 +31,8 @@ export const createMirrorBackend = () => {
       // warning()
     }
 
+    const $storeDeleted = $queryResults.filter(() => !storeMap[store.id])
+
     let ADD_STREAMS_ASYNC
 
     store.mirror = createCursorAPI((cursorMethods, query) => {
@@ -50,7 +52,12 @@ export const createMirrorBackend = () => {
               .map(stores => {
                 return (streamName === '$actions' ? most.mergeArray : combine)(
                   stores
-                    .map(id => storeMap[id] && storeMap[id].streams[streamName])
+                    .map(id => {
+                      if (id === store.id && query.length && streamName === '$state') {
+                        return undefined
+                      }
+                      return storeMap[id] && storeMap[id].streams[streamName]
+                    })
                     .filter(s => s)
                 )
               })
@@ -60,10 +67,12 @@ export const createMirrorBackend = () => {
       })
       Object.defineProperty(cursor, '$stores', {
         get() {
-          return $queryResults.map(() => ({
-            cursor: cursorBackend.query(store.id, query),
-            store
-          }))
+          return $queryResults
+            .map(() => ({
+              cursor: cursorBackend.query(store.id, query),
+              store
+            }))
+            .until($storeDeleted)
         }
       })
       Object.assign(cursor, cursorMethods)
@@ -71,15 +80,50 @@ export const createMirrorBackend = () => {
     })
 
     store.dispatch = createCursorAPI((cursorMethods, query) => {
-      const dispatch = (type, payload, retryIfSelectionEmpty = true) => {}
+      const dispatch = (type, payload, retryIfSelectionEmpty = true) => {
+        if (!store.id) return // warning()
+        const stores = cursorBackend.query(store.id, query)
+        if (stores.length || !retryIfSelectionEmpty) {
+          stores.forEach(id => {
+            storeMap[id].dispatch(type, payload)
+          })
+          return
+        }
+
+        $queryResults
+          .until(
+            $storeDeleted.tap(() => {
+              // warning()
+            })
+          )
+          .map(() => cursorBackend.query(store.id, query))
+          .filter(stores => stores.length)
+          .take(1)
+          .observe(stores => {
+            stores.forEach(id => {
+              storeMap[id].dispatch(type, payload)
+            })
+          })
+      }
       Object.assign(dispatch, cursorMethods)
       return dispatch
     })
 
-    if (streams) {
-      store.streams = streams(store.mirror, store.dispatch)
+    if (!store.streams.$actions) {
+      function* actionGenerator() {
+        while (true) {
+          yield new Promise(resolve => (store.dispatch = resolve))
+        }
+      }
+      store.streams.$actions = most.from(actionGenerator).until($storeDeleted)
     }
-    // TODO: streams.$actions
+
+    if (streams) {
+      const $actions = store.streams.$actions
+      store.streams = streams(store.mirror, store.dispatch)
+      store.streams.$actions = $actions
+    }
+
     ADD_STREAMS_ASYNC = true
   }
 
@@ -113,6 +157,7 @@ export const createMirrorBackend = () => {
 
       const traverse = store => {
         store.children.forEach(traverse)
+        // TODO: test dispatch in response to TEARDOWN
         store.dispatch('TEARDOWN')
         onStoreUpdated({store, op: 'remove'})
       }
