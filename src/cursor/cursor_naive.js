@@ -3,7 +3,7 @@ const traverse = (tree, onVisit) => {
 
   while (q.length) {
     const node = q.shift()
-    q.push(...node.children)
+    q.push(...Object.values(node.children))
     onVisit(node)
   }
 }
@@ -72,7 +72,7 @@ const createCursorBackend = () => {
 
   return {
     query(origin, query) {
-      runQuery(prevTree, [origin], query)
+      return runQuery(prevTree, [origin], query)
     },
     updateNode(tree, op) {
       prevTree = tree

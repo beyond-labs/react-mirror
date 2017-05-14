@@ -60,9 +60,9 @@ function createMirrorDecorator(config = {}) {
 
         const {id, mirror, dispatch, streams} = MirrorBackend.addStore(context.id, {
           requesting: ['$state', '$props'],
-          identifiers: [...config.name, Mirror.__COMPONENT_IDENTIFIER__],
+          identifiers: [...name, Mirror.__COMPONENT_IDENTIFIER__],
           streams: (mirror, dispatch) => {
-            $props = filterUnchanged(pure.propsEqual.bind(this), $props)
+            $props = filterUnchanged(pure.propsEqual.bind(this), $props.startWith(props))
             if (!state) return {$props}
             let $state = filterUnchanged(
               pure.stateEqual.bind(this),
@@ -105,12 +105,12 @@ function createMirrorDecorator(config = {}) {
         MirrorBackend.removeStore(this.id)
       }
       render() {
-        if (this.state.updateCount === 0 && config.state) {
+        if (this.state.updateCount === 0 && state) {
           return null
         }
 
         return React.createElement(WrappedComponent, {
-          ...this.state.props,
+          ...this.state.propsState,
           ref: ref => (this.wrappedInstance = ref),
           dispatch: this.dispatch
         })
@@ -152,8 +152,8 @@ function createMirrorDecorator(config = {}) {
 
     Mirror.__WITH_NAME_CACHE__ = {}
     const withNameCache = Mirror.__COMPONENT_IDENTIFIER__.__WITH_NAME_CACHE__
-    Mirror.withName = function withName(...name) {
-      name = [].concat(...name, config.name).sort()
+    Mirror.withName = function withName(...withName) {
+      withName = [].concat(...withName, ...name).sort()
       const key = JSON.stringify(name) // TODO: support non-string names
       if (withNameCache[key]) return withNameCache[key]
 

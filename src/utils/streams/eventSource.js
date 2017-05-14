@@ -15,7 +15,7 @@ const eventSource = () => {
   return {
     push: event => push(event),
     end: () => eventGenerator.return(),
-    $stream: most.from(eventGenerator())
+    $stream: most.generate(eventGenerator)
   }
 }
 

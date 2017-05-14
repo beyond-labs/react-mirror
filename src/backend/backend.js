@@ -43,7 +43,9 @@ const createMirrorBackend = () => {
             }
 
             return $queryResults
-              .map(queryResults => queryResults[store.id][queryIndex])
+              .map(queryResults => {
+                return queryResults[store.id] ? queryResults[store.id][queryIndex] : []
+              })
               .thru(filterUnchangedKeyArrays)
               .map(stores => {
                 return (streamName === '$actions' ? most.mergeArray : combine)(
@@ -81,7 +83,7 @@ const createMirrorBackend = () => {
         const stores = cursorBackend.query(store.id, query)
         if (stores.length || !retryIfSelectionEmpty) {
           stores.forEach(id => {
-            storeMap[id].dispatch(type, payload)
+            storeMap[id] && storeMap[id].streams.$actions.push({type, payload})
           })
           return
         }
@@ -97,7 +99,7 @@ const createMirrorBackend = () => {
           .take(1)
           .observe(stores => {
             stores.forEach(id => {
-              storeMap[id].dispatch(type, payload)
+              storeMap[id] && storeMap[id].streams.$actions.push({type, payload})
             })
           })
       }
@@ -107,8 +109,8 @@ const createMirrorBackend = () => {
 
     if (!store.streams.$actions) {
       const {push: dispatch, $stream: $actions} = createEventSource()
-      store.dispatch = dispatch
       store.streams.$actions = $actions.until($storeDeleted)
+      store.streams.$actions.push = dispatch
     }
 
     if (streams) {

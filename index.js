@@ -146,7 +146,7 @@ var traverse = function traverse(tree, onVisit) {
 
   while (q.length) {
     var node = q.shift();
-    q.push.apply(q, toConsumableArray(node.children));
+    q.push.apply(q, toConsumableArray(Object.values(node.children)));
     onVisit(node);
   }
 };
@@ -223,7 +223,7 @@ var createCursorBackend$1 = function createCursorBackend() {
 
   return {
     query: function query(origin, _query3) {
-      runQuery(prevTree, [origin], _query3);
+      return runQuery(prevTree, [origin], _query3);
     },
     updateNode: function updateNode(tree, op) {
       prevTree = tree;
@@ -480,7 +480,7 @@ var eventSource$1 = function eventSource() {
     end: function end() {
       return eventGenerator.return();
     },
-    $stream: most.from(eventGenerator())
+    $stream: most.generate(eventGenerator)
   };
 };
 
@@ -571,7 +571,7 @@ var createMirrorBackend = function createMirrorBackend() {
             }
 
             return $queryResults.map(function (queryResults) {
-              return queryResults[store.id][queryIndex];
+              return queryResults[store.id] ? queryResults[store.id][queryIndex] : [];
             }).thru(filterUnchangedKeyArrays).map(function (stores) {
               return (streamName === '$actions' ? most.mergeArray : combine$1)(stores.map(function (id) {
                 if (id === store.id && query.length && streamName === '$state') {
@@ -607,7 +607,7 @@ var createMirrorBackend = function createMirrorBackend() {
         var stores = cursorBackend.query(store.id, query);
         if (stores.length || !retryIfSelectionEmpty) {
           stores.forEach(function (id) {
-            storeMap[id].dispatch(type, payload);
+            storeMap[id] && storeMap[id].streams.$actions.push({ type: type, payload: payload });
           });
           return;
         }
@@ -620,7 +620,7 @@ var createMirrorBackend = function createMirrorBackend() {
           return stores.length;
         }).take(1).observe(function (stores) {
           stores.forEach(function (id) {
-            storeMap[id].dispatch(type, payload);
+            storeMap[id] && storeMap[id].streams.$actions.push({ type: type, payload: payload });
           });
         });
       };
@@ -633,8 +633,8 @@ var createMirrorBackend = function createMirrorBackend() {
           dispatch = _createEventSource2.push,
           $actions = _createEventSource2.$stream;
 
-      store.dispatch = dispatch;
       store.streams.$actions = $actions.until($storeDeleted);
+      store.streams.$actions.push = dispatch;
     }
 
     if (streams) {
@@ -806,9 +806,9 @@ function createMirrorDecorator() {
 
         var _MirrorBackend$addSto = MirrorBackend.addStore(context.id, {
           requesting: ['$state', '$props'],
-          identifiers: [].concat(toConsumableArray(config.name), [Mirror.__COMPONENT_IDENTIFIER__]),
+          identifiers: [].concat(toConsumableArray(name), [Mirror.__COMPONENT_IDENTIFIER__]),
           streams: function streams(mirror, dispatch) {
-            $props = filterUnchanged(pure.propsEqual.bind(_this), $props);
+            $props = filterUnchanged(pure.propsEqual.bind(_this), $props.startWith(props));
             if (!state) return { $props: $props };
             var $state = filterUnchanged(pure.stateEqual.bind(_this), state.call(_this, mirror, dispatch)).until($stateEnd);
             return { $state: $state, $props: $props };
@@ -865,11 +865,11 @@ function createMirrorDecorator() {
         value: function render() {
           var _this2 = this;
 
-          if (this.state.updateCount === 0 && config.state) {
+          if (this.state.updateCount === 0 && state) {
             return null;
           }
 
-          return React.createElement(WrappedComponent, _extends({}, this.state.props, {
+          return React.createElement(WrappedComponent, _extends({}, this.state.propsState, {
             ref: function ref(_ref2) {
               return _this2.wrappedInstance = _ref2;
             },
@@ -928,11 +928,11 @@ function createMirrorDecorator() {
     Mirror.withName = function withName() {
       var _ref3;
 
-      for (var _len = arguments.length, name = Array(_len), _key = 0; _key < _len; _key++) {
-        name[_key] = arguments[_key];
+      for (var _len = arguments.length, withName = Array(_len), _key = 0; _key < _len; _key++) {
+        withName[_key] = arguments[_key];
       }
 
-      name = (_ref3 = []).concat.apply(_ref3, toConsumableArray(name).concat([config.name])).sort();
+      withName = (_ref3 = []).concat.apply(_ref3, toConsumableArray(withName).concat(toConsumableArray(name))).sort();
       var key = JSON.stringify(name); // TODO: support non-string names
       if (withNameCache[key]) return withNameCache[key];
 

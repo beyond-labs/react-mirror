@@ -6,7 +6,8 @@ const Counter = Mirror({
   name: 'counter',
   state(mirror, dispatch) {
     return mirror.$actions.scan(
-      ({value}, {type, payload = 1}) => {
+      ({value}, action) => {
+        const {type, payload = 1} = action
         switch (type) {
           case 'INCREMENT':
             return {value: value + payload}
