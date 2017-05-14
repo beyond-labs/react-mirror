@@ -25,7 +25,7 @@ const combineArrays = (arr1, arr2) => {
   return arr.map((v, i) => (arr1[i] !== undefined ? arr1[i] : arr2[i]))
 }
 
-export const handleActions = (handlers, ...defaultArgs) => (...args) => {
+const handleActions = (handlers, ...defaultArgs) => (...args) => {
   args = combineArrays(args, defaultArgs)
 
   let action = findAction(args)

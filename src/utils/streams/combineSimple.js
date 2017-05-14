@@ -1,4 +1,5 @@
-import most from 'most'
+import * as most from 'most'
 
-export const combineSimple = most.combine.bind(null, (...values) => [...values])
+const combineSimple = most.combine.bind(null, (...values) => [...values])
+
 export default combineSimple

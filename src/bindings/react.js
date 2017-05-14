@@ -1,5 +1,5 @@
-import most from 'most'
-import {Component, createElement} from 'react'
+import * as most from 'most'
+import React from 'react'
 import MirrorBackend from '../backend'
 import shallowEqual from '../utils/shallowEqual'
 import filterUnchanged from '../utils/streams/filterUnchanged'
@@ -42,7 +42,7 @@ function createMirrorDecorator(config = {}) {
       }
     }
 
-    class Mirror extends Component {
+    class Mirror extends React.Component {
       constructor(props, context) {
         super()
         this.state = {updateCount: 0, props: undefined}
@@ -108,7 +108,7 @@ function createMirrorDecorator(config = {}) {
           return null
         }
 
-        return createElement(WrappedComponent, {
+        return React.createElement(WrappedComponent, {
           ...this.state.props,
           ref: ref => (this.wrappedInstance = ref),
           dispatch: this.dispatch
@@ -165,5 +165,4 @@ function createMirrorDecorator(config = {}) {
   }
 }
 
-export {createMirrorDecorator as Mirror}
 export default createMirrorDecorator

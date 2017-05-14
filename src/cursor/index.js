@@ -1,3 +1,3 @@
-import createCursorBackend from './createCursorBackend_naive'
+import createCursorBackend from './cursor_naive'
 
 export default createCursorBackend

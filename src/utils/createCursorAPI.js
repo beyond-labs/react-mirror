@@ -1,4 +1,4 @@
-export const createCursorAPI = (enhancer, query = {}) => {
+const createCursorAPI = (enhancer, query = {}) => {
   const cursorMethods = {
     root() {
       query = [{op: 'root'}]
@@ -27,3 +27,5 @@ export const createCursorAPI = (enhancer, query = {}) => {
   }
   return enhancer(cursorMethods, query)
 }
+
+export default createCursorAPI

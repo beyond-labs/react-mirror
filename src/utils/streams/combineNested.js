@@ -1,7 +1,7 @@
-import most from 'most'
+import * as most from 'most'
 import Enum from '../Enum'
 
-export const combineNested = streamMap => {
+const combineNested = streamMap => {
   const keys = Object.keys(streamMap)
   const streams = keys.map(key => streamMap[key])
   return most.combine((...enumCollection) => {

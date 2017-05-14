@@ -67,7 +67,7 @@ const runQuery = (tree, originIds, query) => {
   return runQuery(tree, result, query.slice(1))
 }
 
-export const createCursorBackend = () => {
+const createCursorBackend = () => {
   let prevTree
 
   return {

@@ -1,6 +1,6 @@
 const hasOwn = Object.prototype.hasOwnProperty
 
-export const shallowEqual = (a, b) => {
+const shallowEqual = (a, b) => {
   if (a === b) return true
 
   let countA = 0

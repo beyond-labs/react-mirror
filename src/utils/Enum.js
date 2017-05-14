@@ -1,4 +1,4 @@
-export class Enum extends Array {
+class Enum extends Array {
   constructor(obj) {
     const keys = Object.keys(obj)
     const values = keys.map(key => obj[key])

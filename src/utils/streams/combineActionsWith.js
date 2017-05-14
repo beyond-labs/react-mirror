@@ -1,4 +1,4 @@
-import most from 'most'
+import * as most from 'most'
 
 const SKIP_TOKEN = '__MIRROR_SKIP_TOKEN__'
 
@@ -33,7 +33,7 @@ const combineActionsWithNothing = actionStream => {
   return actionStream.map(action => ({action}))
 }
 
-export const combineActionsWith = (
+const combineActionsWith = (
   actionStream,
   otherStream,
   options = {before: true, after: true}

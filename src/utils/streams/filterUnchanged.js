@@ -1,15 +1,13 @@
-import most from 'most'
-
 const SKIP_TOKEN = '__MIRROR_SKIP_TOKEN__'
 
-export const filterUnchanged = (equalityCheck, $stream) => {
+const filterUnchanged = (equalityCheck, $stream) => {
   return $stream
     .loop((prevValue, value) => {
       const isEqual = equalityCheck(prevValue, value)
       if (isEqual) return {seed: value, value: SKIP_TOKEN}
       return {seed: value, value}
     }, undefined)
-    .filter(value => value !== SKIP_TOKEN, newStream)
+    .filter(value => value !== SKIP_TOKEN)
 }
 
 const keyArrayEqual = ({oldKeyArray, oldKeySet}, keyArray) => {

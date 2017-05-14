@@ -1,11 +1,11 @@
-import most from 'most'
+import * as most from 'most'
 import createCursorBackend from '../cursor'
-import combine from '../utils/combine'
 import createCursorAPI from '../utils/createCursorAPI'
-import {filterUnchangedKeyArrays} from '../utils/filterUnchanged'
 import generateStoreId, {couldBeStoreId} from '../utils/generateStoreId'
+import combine from '../utils/streams/combine'
+import {filterUnchangedKeyArrays} from '../utils/streams/filterUnchanged'
 
-export const createMirrorBackend = () => {
+const createMirrorBackend = () => {
   let root
   const storeMap = {}
   const cursorBackend = createCursorBackend()

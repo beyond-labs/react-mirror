@@ -1,7 +1,7 @@
-import most from 'most'
+import * as most from 'most'
 import Enum from '../Enum'
 
-export const combine = (...streams) => {
+const combine = (...streams) => {
   return most.combine((...enumCollection) => {
     const result = {}
     enumCollection.forEach(_enum_ => {
