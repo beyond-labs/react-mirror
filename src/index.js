@@ -1,3 +1,4 @@
+import 'regenerator-runtime/runtime'
 import MirrorBackend from './backend'
 import Mirror from './bindings'
 import combine from './utils/streams/combine'

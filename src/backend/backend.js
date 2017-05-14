@@ -3,6 +3,7 @@ import createCursorBackend from '../cursor'
 import createCursorAPI from '../utils/createCursorAPI'
 import generateStoreId, {couldBeStoreId} from '../utils/generateStoreId'
 import combine from '../utils/streams/combine'
+import createEventSource from '../utils/streams/eventSource'
 import {filterUnchangedKeyArrays} from '../utils/streams/filterUnchanged'
 
 const createMirrorBackend = () => {
@@ -10,21 +11,16 @@ const createMirrorBackend = () => {
   const storeMap = {}
   const cursorBackend = createCursorBackend()
 
-  let onStoreUpdated
-  function* storeUpdatedGenerator() {
-    const f = resolve => (onStoreUpdated = resolve)
-    while (true) {
-      yield new Promise(f)
-    }
-  }
+  const {push: onStoreUpdated, $stream: $storeUpdated} = createEventSource()
 
-  const $queryResults = most.from(storeUpdatedGenerator).map(({store, op}) => {
-    if (op === 'add') storeMap[store.id] = store
-    if (op === 'remove') delete storeMap[store.id]
+  const $queryResults = $storeUpdated.map(({store, op}) => {
     return cursorBackend.updateNode(root, {path: store.path, op})
   })
 
-  const updateStore = (store, {requesting, streams, identifiers = [], metadata = {}}) => {
+  const updateStore = (
+    store,
+    {requesting = [], streams, identifiers = [], metadata = {}}
+  ) => {
     Object.assign(store, {identifiers, metadata})
 
     if (identifiers.some(couldBeStoreId)) {
@@ -110,12 +106,9 @@ const createMirrorBackend = () => {
     })
 
     if (!store.streams.$actions) {
-      function* actionGenerator() {
-        while (true) {
-          yield new Promise(resolve => (store.dispatch = resolve))
-        }
-      }
-      store.streams.$actions = most.from(actionGenerator).until($storeDeleted)
+      const {push: dispatch, $stream: $actions} = createEventSource()
+      store.dispatch = dispatch
+      store.streams.$actions = $actions.until($storeDeleted)
     }
 
     if (streams) {
@@ -145,6 +138,7 @@ const createMirrorBackend = () => {
       if (store.parent) store.parent.children[store.id] = store
 
       updateStore(store, {requesting, streams, identifiers, metadata})
+      storeMap[store.id] = store
       onStoreUpdated({store, op: 'add'})
       store.dispatch('INITIALIZE')
 
@@ -159,6 +153,7 @@ const createMirrorBackend = () => {
         store.children.forEach(traverse)
         // TODO: test dispatch in response to TEARDOWN
         store.dispatch('TEARDOWN')
+        delete storeMap[store.id]
         onStoreUpdated({store, op: 'remove'})
       }
       traverse(store)
@@ -178,7 +173,7 @@ const createMirrorBackend = () => {
     }
   }
 
-  root = backend.addStore(null, {metadata: {root: true}})
+  root = backend.addStore(null, {identifiers: ['MIRROR/root'], metadata: {root: true}})
 
   return backend
 }

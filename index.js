@@ -4,6 +4,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
+require('regenerator-runtime/runtime');
 var most = require('most');
 var React = _interopDefault(require('react'));
 
@@ -238,7 +239,7 @@ var createCursorBackend$1 = function createCursorBackend() {
 };
 
 var createCursorAPI = function createCursorAPI(enhancer) {
-  var query = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  var query = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
 
   var cursorMethods = {
     root: function root() {
@@ -425,6 +426,64 @@ var combine$1 = function combine$$1() {
   }].concat(streams));
 };
 
+var eventSource$1 = function eventSource() {
+  var _marked = [eventGenerator].map(regeneratorRuntime.mark);
+
+  var syncBuffer = [];
+  var _push = function push(event) {
+    return syncBuffer.push(event);
+  };
+  function eventGenerator() {
+    var setPush;
+    return regeneratorRuntime.wrap(function eventGenerator$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            if (!syncBuffer.length) {
+              _context.next = 5;
+              break;
+            }
+
+            _context.next = 3;
+            return Promise.resolve(syncBuffer.shift());
+
+          case 3:
+            _context.next = 0;
+            break;
+
+          case 5:
+            setPush = function setPush(resolve) {
+              return _push = resolve;
+            };
+
+          case 6:
+            
+
+            _context.next = 9;
+            return new Promise(setPush);
+
+          case 9:
+            _context.next = 6;
+            break;
+
+          case 11:
+          case 'end':
+            return _context.stop();
+        }
+      }
+    }, _marked[0], this);
+  }
+  return {
+    push: function push(event) {
+      return _push(event);
+    },
+    end: function end() {
+      return eventGenerator.return();
+    },
+    $stream: most.from(eventGenerator())
+  };
+};
+
 var SKIP_TOKEN = '__MIRROR_SKIP_TOKEN__';
 
 var filterUnchanged = function filterUnchanged(equalityCheck, $stream) {
@@ -464,52 +523,24 @@ var filterUnchangedKeyArrays = function filterUnchangedKeyArrays($stream) {
 };
 
 var createMirrorBackend = function createMirrorBackend() {
-  var _marked = [storeUpdatedGenerator].map(regeneratorRuntime.mark);
-
   var root = void 0;
   var storeMap = {};
   var cursorBackend = createCursorBackend$1();
 
-  var onStoreUpdated = void 0;
-  function storeUpdatedGenerator() {
-    var f;
-    return regeneratorRuntime.wrap(function storeUpdatedGenerator$(_context) {
-      while (1) {
-        switch (_context.prev = _context.next) {
-          case 0:
-            f = function f(resolve) {
-              return onStoreUpdated = resolve;
-            };
+  var _createEventSource = eventSource$1(),
+      onStoreUpdated = _createEventSource.push,
+      $storeUpdated = _createEventSource.$stream;
 
-          case 1:
-            
-
-            _context.next = 4;
-            return new Promise(f);
-
-          case 4:
-            _context.next = 1;
-            break;
-
-          case 6:
-          case 'end':
-            return _context.stop();
-        }
-      }
-    }, _marked[0], this);
-  }
-
-  var $queryResults = most.from(storeUpdatedGenerator).map(function (_ref) {
+  var $queryResults = $storeUpdated.map(function (_ref) {
     var store = _ref.store,
         op = _ref.op;
 
-    if (op === 'add') storeMap[store.id] = store;
-    if (op === 'remove') delete storeMap[store.id];
     return cursorBackend.updateNode(root, { path: store.path, op: op });
   });
 
   var _updateStore = function _updateStore(store, _ref2) {
-    var requesting = _ref2.requesting,
+    var _ref2$requesting = _ref2.requesting,
+        requesting = _ref2$requesting === undefined ? [] : _ref2$requesting,
         streams = _ref2.streams,
         _ref2$identifiers = _ref2.identifiers,
         identifiers = _ref2$identifiers === undefined ? [] : _ref2$identifiers,
@@ -598,37 +629,18 @@ var createMirrorBackend = function createMirrorBackend() {
     });
 
     if (!store.streams.$actions) {
-      var actionGenerator = regeneratorRuntime.mark(function actionGenerator() {
-        return regeneratorRuntime.wrap(function actionGenerator$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                
+      var _createEventSource2 = eventSource$1(),
+          dispatch = _createEventSource2.push,
+          $actions = _createEventSource2.$stream;
 
-                _context2.next = 3;
-                return new Promise(function (resolve) {
-                  return store.dispatch = resolve;
-                });
-
-              case 3:
-                _context2.next = 0;
-                break;
-
-              case 5:
-              case 'end':
-                return _context2.stop();
-            }
-          }
-        }, actionGenerator, this);
-      });
-
-      store.streams.$actions = most.from(actionGenerator).until($storeDeleted);
+      store.dispatch = dispatch;
+      store.streams.$actions = $actions.until($storeDeleted);
     }
 
     if (streams) {
-      var $actions = store.streams.$actions;
+      var _$actions = store.streams.$actions;
       store.streams = streams(store.mirror, store.dispatch);
-      store.streams.$actions = $actions;
+      store.streams.$actions = _$actions;
     }
 
     ADD_STREAMS_ASYNC = true;
@@ -657,6 +669,7 @@ var createMirrorBackend = function createMirrorBackend() {
       if (store.parent) store.parent.children[store.id] = store;
 
       _updateStore(store, { requesting: requesting, streams: streams, identifiers: identifiers, metadata: metadata });
+      storeMap[store.id] = store;
       onStoreUpdated({ store: store, op: 'add' });
       store.dispatch('INITIALIZE');
 
@@ -671,6 +684,7 @@ var createMirrorBackend = function createMirrorBackend() {
         store.children.forEach(traverse);
         // TODO: test dispatch in response to TEARDOWN
         store.dispatch('TEARDOWN');
+        delete storeMap[store.id];
         onStoreUpdated({ store: store, op: 'remove' });
       };
       traverse(store);
@@ -695,7 +709,7 @@ var createMirrorBackend = function createMirrorBackend() {
     }
   };
 
-  root = backend.addStore(null, { metadata: { root: true } });
+  root = backend.addStore(null, { identifiers: ['MIRROR/root'], metadata: { root: true } });
 
   return backend;
 };
@@ -780,32 +794,13 @@ function createMirrorDecorator() {
 
         _this.state = { updateCount: 0, props: undefined };
 
-        _this.propsRecievedGenerator = regeneratorRuntime.mark(function _callee() {
-          var _this2 = this;
+        var _createEventSource = eventSource$1(),
+            onReceivedProps = _createEventSource.push,
+            endReceivedPropsEventSource = _createEventSource.end,
+            $props = _createEventSource.$stream;
 
-          return regeneratorRuntime.wrap(function _callee$(_context) {
-            while (1) {
-              switch (_context.prev = _context.next) {
-                case 0:
-                  
-
-                  _context.next = 3;
-                  return new Promise(function (resolve) {
-                    return _this2.onReceivedProps = resolve;
-                  });
-
-                case 3:
-                  _context.next = 0;
-                  break;
-
-                case 5:
-                case 'end':
-                  return _context.stop();
-              }
-            }
-          }, _callee, this);
-        });
-        var $stateEnd = most.from(new Promise(function (resolve) {
+        Object.assign(_this, { onReceivedProps: onReceivedProps, endReceivedPropsEventSource: endReceivedPropsEventSource });
+        var $stateEnd = most.fromPromise(new Promise(function (resolve) {
           return _this.onStateEnd = resolve;
         }));
 
@@ -813,9 +808,9 @@ function createMirrorDecorator() {
           requesting: ['$state', '$props'],
           identifiers: [].concat(toConsumableArray(config.name), [Mirror.__COMPONENT_IDENTIFIER__]),
           streams: function streams(mirror, dispatch) {
-            var $props = filterUnchanged(pure.propsEqual.bind(_this), most.from(_this.propsRecievedGenerator));
+            $props = filterUnchanged(pure.propsEqual.bind(_this), $props);
             if (!state) return { $props: $props };
-            var $state = filterUnchanged(pure.stateEqual.bind(_this)).until($stateEnd, state.call(_this, mirror, dispatch));
+            var $state = filterUnchanged(pure.stateEqual.bind(_this), state.call(_this, mirror, dispatch)).until($stateEnd);
             return { $state: $state, $props: $props };
           },
           metadata: {
@@ -861,14 +856,14 @@ function createMirrorDecorator() {
       }, {
         key: 'componentWillUnmount',
         value: function componentWillUnmount() {
-          this.propsRecievedGenerator.return();
+          this.endReceivedPropsEventSource();
           this.onStateEnd();
           MirrorBackend.removeStore(this.id);
         }
       }, {
         key: 'render',
         value: function render() {
-          var _this3 = this;
+          var _this2 = this;
 
           if (this.state.updateCount === 0 && config.state) {
             return null;
@@ -876,7 +871,7 @@ function createMirrorDecorator() {
 
           return React.createElement(WrappedComponent, _extends({}, this.state.props, {
             ref: function ref(_ref2) {
-              return _this3.wrappedInstance = _ref2;
+              return _this2.wrappedInstance = _ref2;
             },
             dispatch: this.dispatch
           }));

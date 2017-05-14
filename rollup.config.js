@@ -16,7 +16,7 @@ export default {
       plugins: ['external-helpers', 'transform-object-rest-spread']
     })
   ],
-  external: ['most', 'react'],
+  external: ['most', 'react', 'regenerator-runtime/runtime'],
   dest: 'index.js',
   sourceMap: true
 }

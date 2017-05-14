@@ -2,6 +2,7 @@ import * as most from 'most'
 import React from 'react'
 import MirrorBackend from '../backend'
 import shallowEqual from '../utils/shallowEqual'
+import createEventSource from '../utils/streams/eventSource'
 import filterUnchanged from '../utils/streams/filterUnchanged'
 
 const instantiseMapToProps = mapToProps => {
@@ -47,26 +48,26 @@ function createMirrorDecorator(config = {}) {
         super()
         this.state = {updateCount: 0, props: undefined}
 
-        this.propsRecievedGenerator = function*() {
-          while (true) {
-            yield new Promise(resolve => (this.onReceivedProps = resolve))
-          }
-        }
-        const $stateEnd = most.from(new Promise(resolve => (this.onStateEnd = resolve)))
+        let {
+          push: onReceivedProps,
+          end: endReceivedPropsEventSource,
+          $stream: $props
+        } = createEventSource()
+        Object.assign(this, {onReceivedProps, endReceivedPropsEventSource})
+        const $stateEnd = most.fromPromise(
+          new Promise(resolve => (this.onStateEnd = resolve))
+        )
 
         const {id, mirror, dispatch, streams} = MirrorBackend.addStore(context.id, {
           requesting: ['$state', '$props'],
           identifiers: [...config.name, Mirror.__COMPONENT_IDENTIFIER__],
           streams: (mirror, dispatch) => {
-            const $props = filterUnchanged(
-              pure.propsEqual.bind(this),
-              most.from(this.propsRecievedGenerator)
-            )
+            $props = filterUnchanged(pure.propsEqual.bind(this), $props)
             if (!state) return {$props}
-            let $state = filterUnchanged(pure.stateEqual.bind(this)).until(
-              $stateEnd,
+            let $state = filterUnchanged(
+              pure.stateEqual.bind(this),
               state.call(this, mirror, dispatch)
-            )
+            ).until($stateEnd)
             return {$state, $props}
           },
           metadata: {
@@ -99,7 +100,7 @@ function createMirrorDecorator(config = {}) {
         return nextState.updateCount > this.state.updateCount
       }
       componentWillUnmount() {
-        this.propsRecievedGenerator.return()
+        this.endReceivedPropsEventSource()
         this.onStateEnd()
         MirrorBackend.removeStore(this.id)
       }

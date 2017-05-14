@@ -1,4 +1,4 @@
-const createCursorAPI = (enhancer, query = {}) => {
+const createCursorAPI = (enhancer, query = []) => {
   const cursorMethods = {
     root() {
       query = [{op: 'root'}]
