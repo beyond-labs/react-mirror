@@ -1,19 +1,27 @@
-// Store ids should be alphabetic to avoid sparse-array enums
+/*
+  Store ids should:
 
-// prettier-ignore
-const CHAR_MAP = {
-  0: 'a', 1: 'b', 2: 'c', 3: 'd', 4: 'e', 5: 'f', 6: 'g', 7: 'h', 8: 'i', 9: 'j', a: 'k',
-  b: 'l', c: 'm', d: 'n', e: 'o', f: 'p', g: 'q', h: 'r', i: 's', j: 't', k: 'u', l: 'v',
-  m: 'w', n: 'x', o: 'y', p: 'z'
-}
+    * Be easy to read / recognise
+    * Not conflict with filters
+    * Communicate how many components have been mounted during session
+*/
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+const counter = [0, -1]
 
 export const generateStoreId = () => {
-  return Math.random()
-    .toString(26)
-    .slice(2)
-    .split('')
-    .map(char => CHAR_MAP[char])
-    .join('')
+  for (let i = counter.length - 1; i >= 0; i--) {
+    if (counter[i] === 25) {
+      counter[i] = 0
+      if (!i) counter.unshift(0)
+    } else {
+      counter[i] += 1
+      break
+    }
+  }
+  return counter.map(char => ALPHABET[char]).join('')
 }
+
+export const couldBeStoreId = RegExp.prototype.test.bind(/^[A-Z]{2,12}$/)
 
 export default generateStoreId

@@ -189,16 +189,16 @@ stores[0] === stores['oigkzfajky']
 
 ##### `$stores`
 
-By comparison, `$stores` emits a value every time a store is added or removed. Each value contains the cursor `selection` (array of store IDs) & `tree` (structural metadata with reference to local store).
+By comparison, `$stores` emits a value every time a store is added, removed or updated. Each value contains the cursor selection (array of store IDs) & `tree` (structural metadata with reference to local store).
 
 ```js
 {
-  selection: ['oigkzfajky']
+  cursor: ['oigkzfajky']
   tree: {
     id: 'oigkzfajky',
     name: 'counter'
-    component: Counter,
-    selection: [], // aggregated from $props / $state / $actions
+    instance: <Counter />,
+    queries: {$props: [], $state: [], $actions: ['oigkzfajky']},
     children: [/* ... */],
     parent: /* ... */
   }
@@ -349,12 +349,6 @@ Access the wrapped component instance with `this.getWrappedInstance()`.
 
 `mirror` & `dispatch` can be accessed via `this.mirror` / `this.dispatch`. This is potentially dangerous, and provided as an escape hatch only.
 
-There's also a `raw` cursor for querying store instances; `raw` might be helpful if you're extending Mirror. It triggers a callback whenever the cursor selection changes.
-
-```js
-this.raw.children('todo-item')((todoItemInstances) => /* ... */)
-```
-
 #### **Circular State Dependency**
 
 The `mirror` cursor omits local state that's part of a query (eg, `mirror.all().$state`). Avoiding this circular dependency avoids infinite rendering loops. If you really want this access `$state` directly without any traversal.
@@ -372,17 +366,17 @@ This doesn't apply to static cursors.
 
 Mirror makes it easy to build predictable applications. But things go wrong sometimes. This section will help you avoid things going wrong.
 
-#### **Transitive Updates**
+#### **Commutative Updates**
 
-Mirror cannot guarantee the order stores are updated in, or the order of prop changes. Except for when handling actions `state` should be transitive, for example:
+Mirror cannot guarantee the order stores are updated in, or the order of prop changes. Except for when handling actions `state` should be commutative (order of state / prop values must not affect final state), for example:
 
 1. `state` is subscribed to multiple state / props streams
 2. These streams emit some values in a random order
 3. The state stream's last value should be the same after every run
 
-If `state` is not transitive then dispatching an action with cascading effects can cause race conditions / unpredictable state. Tips to keep `state` transitive:
+If `state` is not commutative then dispatching an action with cascading effects can cause race conditions / unpredictable state. Tips to keep `state` commutative:
 
-* Streams that depend on actions-only are always transitive
+* Streams that depend on actions-only are always commutative
 * Reduce state from multiple sources to a single value
 * Prefer `mapToProps` over using `$props` inside `state`
 * Props which never change are safe to use inside `state`

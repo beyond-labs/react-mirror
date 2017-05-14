@@ -74,7 +74,7 @@ export const createCursorBackend = () => {
     query(origin, query) {
       runQuery(prevTree, [origin], query)
     },
-    addOrRemoveNode(tree, op) {
+    updateNode(tree, op) {
       prevTree = tree
       const results = {}
       traverse(tree, node => {

@@ -1,9 +1,9 @@
 `createCursorBackend`
 =====================
 
-React Mirror has 3 performance-critical modules: `createStreamFactory`, `createCursorBackend` & `Mirror` itself. This requirements document describes `createCursorBackend` in detail & is intended to aid the implementer.
+`createCursorBackend` is a performance-critical modules for Mirror. This document describes `createCursorBackend` in detail & is intended to aid the implementer.
 
-All stores (underneath a particular root store) share a cursor backend. The cursor backend identifies which stores match a set of queries, whenever a store is added/removed, or an action is dispatched. While implementing `createCursorBackend` naively is fairly trivial creating a performant solution isn't. Computation can likely be avoided with dynamic programming techniques and memoization between subsequent calls. Performant cache invalidation could be challenging here. Some queries will only occur once, and others will occur many times, so it may be beneficial to process some queries differently to others.
+All stores share a cursor backend. The cursor backend identifies which stores match a set of queries, whenever a store is added/removed/updated, or an action is dispatched. While implementing `createCursorBackend` naively is fairly trivial creating a performant solution isn't. Computation can likely be avoided with dynamic programming techniques and memoization between subsequent calls. Performant cache invalidation could be challenging here. Some queries will only occur once, and others will occur many times, so it may be beneficial to process some queries differently to others.
 
 **API**
 
@@ -11,15 +11,14 @@ All stores (underneath a particular root store) share a cursor backend. The curs
 :: Query
 [...{
   op: 'root' | 'children' | 'parents',
-  filter: null | String<id | name> | Function<component>,
+  filter: null | String<id> | Any<identifier>,
   maxStores: Number
 }]
 
 :: Node
 {
   id: String,
-  name: [...String],
-  component: Function,
+  identifiers: [...Any],
   queries: [...Query],
   children: [...Node],
   parent: Node | null
@@ -28,8 +27,8 @@ All stores (underneath a particular root store) share a cursor backend. The curs
 :: createCursorBackend()
 Void => {
   query: (String<origin>, Query) => [...String<id>]
-  addOrRemoveNode:
-    (Node<root>, {op: 'add' | 'remove', path: [...String<id>]}) =>
+  updateNode:
+    (Node<root>, {op: 'add' | 'remove' | 'update', path: [...String<id>]}) =>
     {...[String<id>]: [...[...String<id>]<query_result>]}
 }
 ```
@@ -39,21 +38,21 @@ Void => {
 * Number of nodes (max): **100s**
 * Number of queries (max): **1000s**
 * Number of calls to `query` per second (during spikes): **10s**
-* Number of calls to `addOrRemoveNode` per second (during spikes): **10s**
+* Number of calls to `updateNode` per second (during spikes): **10s**
 
 **Example**
 
 ```js
 const cursorBackend = createCursorBackend()
 
-cursorBackend.addOrRemoveNode(/* ... */) // add root store
-cursorBackend.addOrRemoveNode(/* ... */) // add form
-cursorBackend.addOrRemoveNode(/* ... */) // add first field
+cursorBackend.updateNode(/* ... */) // add root store
+cursorBackend.updateNode(/* ... */) // add form
+cursorBackend.updateNode(/* ... */) // add first field
 // add second field
-const queries = cursorBackend.addOrRemoveNode(
+const queries = cursorBackend.updateNode(
   {
     id: 'oigkzfajky',
-    name: ['root'],
+    identifiers: ['root'],
     component: Root,
     queries: [
       [{op: 'children', filter: 'form', maxStores: 1}, {op: 'children', filter: 'field', maxStores: Infinity}]
@@ -61,12 +60,12 @@ const queries = cursorBackend.addOrRemoveNode(
     children: [
       {
         id: 'hsmfbtmqka'
-        name: ['form', 'form/create-project'],
+        identifiers: ['form', 'form/create-project'],
         component: Form,
         children: [
           {
             id: 'renxqnmjjk',
-            name: ['field', 'field/title'],
+            identifiers: ['field', 'field/title'],
             component: Input
             queries: [
               [{op: 'root'}, {op: 'children', filter: Form, maxStores: 1}]
@@ -75,7 +74,7 @@ const queries = cursorBackend.addOrRemoveNode(
           },
           {
             id: 'ljejmzqowf',
-            name: ['field', 'field/description'],
+            identifiers: ['field', 'field/description'],
             component: Input
             children: []
           }
@@ -105,7 +104,6 @@ console.log(query)
 
 **Tips**
 
-* Nodes can only be added or removed, but not edited. Only the `children` property will change.
 * `children` is an enum. You can iterate over it like an array or access nodes by ID.
 * `Map` can accept functions as keys. This enables `O(n)` component lookups without converting to a string.
 * You can ignore all ops before the first `root` op.
@@ -119,3 +117,4 @@ console.log(query)
 * `children` should match shallow stores first, and `parents` should match deep stores first.
 * The returned object can safely be reused between subsequent calls.
 * Some node structures are likely to recur many times over a single session.
+* Queries can only be added, never removed or updated (without removing the store)
