@@ -252,6 +252,7 @@ var createCursorAPI = function createCursorAPI(enhancer) {
       var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
       var maxStores = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : Infinity;
 
+      filter = filter && (filter.__COMPONENT_IDENTIFIER__ || filter);
       query = query.concat({ op: 'parents', filter: filter, maxStores: maxStores });
       return createCursorAPI(enhancer, query);
     },
@@ -259,6 +260,7 @@ var createCursorAPI = function createCursorAPI(enhancer) {
       var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
       var maxStores = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : Infinity;
 
+      filter = filter && (filter.__COMPONENT_IDENTIFIER__ || filter);
       query = query.concat({ op: 'children', filter: filter, maxStores: maxStores });
       return createCursorAPI(enhancer, query);
     },
@@ -266,24 +268,28 @@ var createCursorAPI = function createCursorAPI(enhancer) {
       var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
       var maxStores = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : Infinity;
 
+      filter = filter && (filter.__COMPONENT_IDENTIFIER__ || filter);
       query = [{ op: 'root' }, { op: 'children', filter: filter, maxStores: maxStores }];
       return createCursorAPI(enhancer, query);
     },
     one: function one() {
       var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
+      filter = filter && (filter.__COMPONENT_IDENTIFIER__ || filter);
       query = [{ op: 'root' }, { op: 'children', filter: filter, maxStores: 1 }];
       return createCursorAPI(enhancer, query);
     },
     parent: function parent() {
       var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
+      filter = filter && (filter.__COMPONENT_IDENTIFIER__ || filter);
       query = query.concat({ op: 'parents', filter: filter, maxStores: 1 });
       return createCursorAPI(enhancer, query);
     },
     child: function child() {
       var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
+      filter = filter && (filter.__COMPONENT_IDENTIFIER__ || filter);
       query = query.concat({ op: 'children', filter: filter, maxStores: 1 });
       return createCursorAPI(enhancer, query);
     }
@@ -322,9 +328,10 @@ var couldBeStoreId = RegExp.prototype.test.bind(/^[A-Z]{2,12}$/);
 var Enum = function (_Array) {
   inherits(Enum, _Array);
 
-  function Enum(obj) {
+  function Enum() {
     var _ref;
 
+    var obj = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     classCallCheck(this, Enum);
 
     var keys = Object.keys(obj);
@@ -334,15 +341,15 @@ var Enum = function (_Array) {
 
     var _this = possibleConstructorReturn(this, (_ref = Enum.__proto__ || Object.getPrototypeOf(Enum)).call.apply(_ref, [this].concat(toConsumableArray(values))));
 
-    _this.keys = keys;
+    Object.defineProperty(_this, 'keys', { value: keys });
     keys.forEach(function (key) {
-      return _this[key] = obj[key];
+      return Object.defineProperty(_this, key, { value: obj[key] });
     });
     return _this;
   }
 
   createClass(Enum, [{
-    key: "map",
+    key: 'map',
     value: function map(f) {
       var obj = {};
       this.forEach(function map(value, index, key, arr) {
@@ -351,7 +358,7 @@ var Enum = function (_Array) {
       return new Enum(obj);
     }
   }, {
-    key: "filter",
+    key: 'filter',
     value: function filter(f) {
       var obj = {};
       this.forEach(function filter(value, index, key, arr) {
@@ -362,51 +369,51 @@ var Enum = function (_Array) {
       return new Enum(obj);
     }
   }, {
-    key: "forEach",
+    key: 'forEach',
     value: function forEach(f) {
-      return get(Enum.prototype.__proto__ || Object.getPrototypeOf(Enum.prototype), "forEach", this).call(this, function forEach(value, index, arr) {
+      return get(Enum.prototype.__proto__ || Object.getPrototypeOf(Enum.prototype), 'forEach', this).call(this, function forEach(value, index, arr) {
         return f(value, index, this.keys[index], arr);
       });
     }
   }, {
-    key: "every",
+    key: 'every',
     value: function every(f) {
-      return get(Enum.prototype.__proto__ || Object.getPrototypeOf(Enum.prototype), "every", this).call(this, function every(value, index, arr) {
+      return get(Enum.prototype.__proto__ || Object.getPrototypeOf(Enum.prototype), 'every', this).call(this, function every(value, index, arr) {
         return f(value, index, this.keys[index], arr);
       });
     }
   }, {
-    key: "find",
+    key: 'find',
     value: function find(f) {
-      return get(Enum.prototype.__proto__ || Object.getPrototypeOf(Enum.prototype), "find", this).call(this, function find(value, index, arr) {
+      return get(Enum.prototype.__proto__ || Object.getPrototypeOf(Enum.prototype), 'find', this).call(this, function find(value, index, arr) {
         return f(value, index, this.keys[index], arr);
       });
     }
   }, {
-    key: "findIndex",
+    key: 'findIndex',
     value: function findIndex(f) {
-      return get(Enum.prototype.__proto__ || Object.getPrototypeOf(Enum.prototype), "findIndex", this).call(this, function findIndex(value, index, arr) {
+      return get(Enum.prototype.__proto__ || Object.getPrototypeOf(Enum.prototype), 'findIndex', this).call(this, function findIndex(value, index, arr) {
         return f(value, index, this.keys[index], arr);
       });
     }
   }, {
-    key: "some",
+    key: 'some',
     value: function some(f) {
-      return get(Enum.prototype.__proto__ || Object.getPrototypeOf(Enum.prototype), "some", this).call(this, function some(value, index, arr) {
+      return get(Enum.prototype.__proto__ || Object.getPrototypeOf(Enum.prototype), 'some', this).call(this, function some(value, index, arr) {
         return f(value, index, this.keys[index], arr);
       });
     }
   }, {
-    key: "reduce",
+    key: 'reduce',
     value: function reduce(f) {
-      return get(Enum.prototype.__proto__ || Object.getPrototypeOf(Enum.prototype), "reduce", this).call(this, function reduce(prev, value, index, arr) {
+      return get(Enum.prototype.__proto__ || Object.getPrototypeOf(Enum.prototype), 'reduce', this).call(this, function reduce(prev, value, index, arr) {
         return f(prev, value, index, this.keys[index], arr);
       });
     }
   }, {
-    key: "reduceRight",
+    key: 'reduceRight',
     value: function reduceRight(f) {
-      return get(Enum.prototype.__proto__ || Object.getPrototypeOf(Enum.prototype), "reduceRight", this).call(this, function reduceRight(prev, value, index, arr) {
+      return get(Enum.prototype.__proto__ || Object.getPrototypeOf(Enum.prototype), 'reduceRight', this).call(this, function reduceRight(prev, value, index, arr) {
         return f(prev, value, index, this.keys[index], arr);
       });
     }
@@ -414,24 +421,27 @@ var Enum = function (_Array) {
   return Enum;
 }(Array);
 
-var combine$1 = function combine$$1() {
-  for (var _len = arguments.length, streams = Array(_len), _key = 0; _key < _len; _key++) {
-    streams[_key] = arguments[_key];
-  }
+var SKIP_TOKEN = '__MIRROR_SKIP_TOKEN__';
 
-  return most.combine.apply(most, [function () {
-    for (var _len2 = arguments.length, enumCollection = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-      enumCollection[_key2] = arguments[_key2];
+/*
+  Combines streams of normal values into a stream of Enums
+*/
+var combineEnum = function combineEnum(streams, ids) {
+  if (!streams.length) return most.of(new Enum());
+  return most.combineArray(function () {
+    for (var _len = arguments.length, values = Array(_len), _key = 0; _key < _len; _key++) {
+      values[_key] = arguments[_key];
     }
 
     var result = {};
-    enumCollection.forEach(function (_enum_) {
-      _enum_.forEach(function (value, i, key) {
-        result[key] = value;
-      });
+    values.forEach(function (value, i) {
+      if (value !== SKIP_TOKEN) result[ids[i]] = value;
     });
     return new Enum(result);
-  }].concat(streams));
+  }, streams.map(function ($stream) {
+    var $start = most.of([SKIP_TOKEN]).until($stream);
+    return $start.concat($stream);
+  }));
 };
 
 var eventSource$1 = function eventSource() {
@@ -492,15 +502,15 @@ var eventSource$1 = function eventSource() {
   };
 };
 
-var SKIP_TOKEN = '__MIRROR_SKIP_TOKEN__';
+var SKIP_TOKEN$1 = '__MIRROR_SKIP_TOKEN__';
 
 var filterUnchanged = function filterUnchanged(equalityCheck, $stream) {
   return $stream.loop(function (prevValue, value) {
     var isEqual = equalityCheck(prevValue, value);
-    if (isEqual) return { seed: value, value: SKIP_TOKEN };
+    if (isEqual) return { seed: value, value: SKIP_TOKEN$1 };
     return { seed: value, value: value };
   }, undefined).filter(function (value) {
-    return value !== SKIP_TOKEN;
+    return value !== SKIP_TOKEN$1;
   });
 };
 
@@ -509,6 +519,7 @@ var keyArrayEqual = function keyArrayEqual(_ref, keyArray) {
       oldKeySet = _ref.oldKeySet;
 
   if (oldKeyArray === keyArray) return true;
+  if (oldKeyArray === undefined) return false;
 
   for (var i in keyArray) {
     if (!oldKeySet.has(keyArray[i])) return false;
@@ -520,13 +531,13 @@ var keyArrayEqual = function keyArrayEqual(_ref, keyArray) {
 var filterUnchangedKeyArrays = function filterUnchangedKeyArrays($stream) {
   return $stream.loop(function (seed, keyArray) {
     var isEqual = keyArrayEqual(seed, keyArray);
-    if (isEqual) return { seed: seed, value: SKIP_TOKEN };
+    if (isEqual) return { seed: seed, value: SKIP_TOKEN$1 };
     return {
       seed: { oldKeyArray: keyArray, oldKeySet: new Set(keyArray) },
       value: keyArray
     };
-  }, { oldKeyArray: [], oldKeySet: new Set() }).filter(function (value) {
-    return value !== SKIP_TOKEN;
+  }, {}).filter(function (value) {
+    return value !== SKIP_TOKEN$1;
   });
 };
 
@@ -557,7 +568,7 @@ var createMirrorBackend = function createMirrorBackend() {
 
     Object.assign(store, { identifiers: identifiers, metadata: metadata });
 
-    invariant(!identifiers.some(couldBeStoreId), 'Identifiers cannot conflict with store IDs (all uppercase & alphabetical) %s', JSON.stringify(identifiers.filter(couldBeStoreId)));
+    invariant(!identifiers.some(couldBeStoreId), 'Cannot use all-uppercase identifiers ("%s") because they could conflict with internally-used IDs', identifiers.find(couldBeStoreId));
 
     var $storeDeleted = $queryResults.filter(function () {
       return !storeMap[store.id];
@@ -572,22 +583,29 @@ var createMirrorBackend = function createMirrorBackend() {
           get: function get() {
             var queryIndex = store.queries.length;
             store.queries.push(query);
+            store.queryTypes.push(streamName);
+            store.queryResults.push([]);
             if (ADD_STREAMS_ASYNC) {
+              warning(false, 'Accessing "mirror.%s" after a store has been added is ineffcient, you can batch queries with `updateStore` to improve performance');
               onStoreUpdated({ store: store, op: 'update' });
             }
 
-            // TODO: startWith last value emitted
             return $queryResults.map(function (queryResults) {
               return queryResults[store.id] ? queryResults[store.id][queryIndex] : [];
             }).thru(filterUnchangedKeyArrays).map(function (stores) {
-              return (streamName === '$actions' ? most.mergeArray : combine$1)(stores.map(function (id) {
+              store.queryResults[queryIndex] = stores;
+              return (streamName === '$actions' ? most.mergeArray : combineEnum)(stores.map(function (id) {
                 if (id === store.id && query.length && streamName === '$state') {
                   return undefined;
                 }
-                return storeMap[id] && storeMap[id].streams[streamName];
+                var $stream = storeMap[id] && storeMap[id].streams[streamName];
+                if ($stream && storeMap[id] && storeMap[id].tails[streamName]) {
+                  $stream = $stream.startWith(storeMap[id].tails[streamName]);
+                }
+                return $stream;
               }).filter(function (s) {
                 return s;
-              }));
+              }), stores);
             }).switchLatest();
           }
         });
@@ -610,7 +628,7 @@ var createMirrorBackend = function createMirrorBackend() {
       var dispatch = function dispatch(type, payload) {
         var retryIfSelectionEmpty = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
-        invariant(storeMap[store.id], "dispatching from a store that doesn't exist, hasn't been added yet, or was removed [%s]", store.id);
+        invariant(storeMap[store.id], 'Cannot dispatch actions ("%s") from a store ("%s") that does not exist', type, store.id);
         var stores = cursorBackend.query(store.id, query);
         if (stores.length || !retryIfSelectionEmpty) {
           stores.forEach(function (id) {
@@ -620,7 +638,7 @@ var createMirrorBackend = function createMirrorBackend() {
         }
 
         $queryResults.until($storeDeleted.tap(function () {
-          warning(false, "No stores matched dispatch query. While waiting for a match the store which dispatched the action unmounted, so we've had to discard the action. You could try dispatching to an action proxy? [%s]", JSON.stringify({ type: type, payload: payload }));
+          warning(false, 'No store matched an action ("%s"), & the dispatcher ("%s") was removed. We\'ve discarded the action. You could try dispatching the action via a proxy.', type, store.id);
         })).map(function () {
           return cursorBackend.query(store.id, query);
         }).filter(function (stores) {
@@ -642,14 +660,20 @@ var createMirrorBackend = function createMirrorBackend() {
           dispatch = _createEventSource2.push,
           $actions = _createEventSource2.$stream;
 
-      store.streams.$actions = $actions.until($storeDeleted);
+      store.streams.$actions = $actions.until($storeDeleted).multicast();
       store.streams.$actions.push = dispatch;
     }
 
     if (streams) {
-      var _$actions = store.streams.$actions;
-      store.streams = streams(store.mirror, store.dispatch);
-      store.streams.$actions = _$actions;
+      var _streams = streams(store.mirror, store.dispatch);
+      Object.keys(_streams).forEach(function (streamName) {
+        _streams[streamName] = _streams[streamName].tap(function (evt) {
+          return store.tails[streamName] = evt;
+        }).multicast();
+      });
+      store.streams = Object.assign(_streams, {
+        $actions: store.streams.$actions
+      });
     }
 
     ADD_STREAMS_ASYNC = true;
@@ -664,13 +688,16 @@ var createMirrorBackend = function createMirrorBackend() {
 
       if (!parentId) parentId = root && root.id;
       var parent = storeMap[parentId];
-      invariant(parent || !root, 'Cannot add store: parent not found [%s]', parentId);
+      invariant(parent || !root, 'Cannot add store as a child of "%s", because "%s" does not exist', parentId, parentId);
 
       var store = {
         id: generateStoreId(),
         path: root ? parent.path.concat(parentId) : [],
         streams: {},
+        tails: {},
         queries: [],
+        queryTypes: [],
+        queryResults: [],
         children: {},
         parent: parent
       };
@@ -686,7 +713,7 @@ var createMirrorBackend = function createMirrorBackend() {
     },
     removeStore: function removeStore(storeId) {
       var store = storeMap[storeId];
-      invariant(store, "Trying to remove store that doesn't exist [%s]", storeId);
+      invariant(store, 'Cannot remove a store ("%s") that does not exist', storeId);
       invariant(store !== root, 'Cannot remove root store');
 
       var traverse = function traverse(store) {
@@ -709,16 +736,28 @@ var createMirrorBackend = function createMirrorBackend() {
           metadata = _ref4.metadata;
 
       var store = storeMap[storeId];
-      invariant(store, 'Trying to update store that does not exist [%s]', storeId);
+      invariant(store, 'Cannot update a store ("%s") that does not exist', storeId);
 
       _updateStore(store, { requesting: requesting, streams: streams, identifiers: identifiers, metadata: metadata });
       onStoreUpdated({ store: store, op: 'update' });
 
       return store;
-    }
+    },
+
+    query: createCursorAPI(function (cursorMethods, query) {
+      var runQuery = function runQuery() {
+        return cursorBackend.query(root.id, query);
+      };
+      Object.assign(runQuery, cursorMethods);
+      return runQuery;
+    }),
+    stores: storeMap
   };
 
-  root = backend.addStore(null, { identifiers: ['MIRROR/root'], metadata: { root: true } });
+  backend.root = root = backend.addStore(null, {
+    identifiers: ['MIRROR/root'],
+    metadata: { root: true }
+  });
 
   return backend;
 };
@@ -792,6 +831,7 @@ function createMirrorDecorator() {
         return null;
       };
     }
+    var _name = WrappedComponent.displayName || WrappedComponent.name || 'Component';
 
     var Mirror = function (_React$Component) {
       inherits(Mirror, _React$Component);
@@ -819,10 +859,12 @@ function createMirrorDecorator() {
           streams: function streams(mirror, dispatch) {
             $props = filterUnchanged(pure.propsEqual.bind(_this), $props.startWith(props));
             var $state = state && state.call(_this, mirror, dispatch);
-            warning(!state || $state && $state.subscribe, 'state should return a stream, did you forget a "return" statement? %s', JSON.stringify(name));
+            warning(!state || $state && $state.subscribe, '`state` should return a stream, did you forget a "return" statement? (at "%s")', [_name].concat(name.filter(function (name) {
+              return typeof name === 'string';
+            }).join(', ')));
             if (!state || !$state) return { $props: $props };
-            $state = filterUnchanged(pure.stateEqual.bind(_this), $state).skipWhile(function (state) {
-              return state === undefined;
+            $state = filterUnchanged(pure.stateEqual.bind(_this), $state).filter(function (state) {
+              return state !== undefined;
             }).until($stateEnd);
             return { $state: $state, $props: $props };
           },
@@ -893,7 +935,6 @@ function createMirrorDecorator() {
       return Mirror;
     }(React.Component);
 
-    var _name = WrappedComponent.displayName || WrappedComponent.name || 'Component';
     Mirror.displayName = 'Mirror(' + _name + ')';
     Mirror.contextTypes = {
       id: function id() {}
@@ -936,22 +977,40 @@ function createMirrorDecorator() {
         } }
     });
 
-    Mirror.__WITH_NAME_CACHE__ = {};
+    if (Mirror === Mirror.__COMPONENT_IDENTIFIER__) {
+      Mirror.__WITH_NAME_CACHE__ = {
+        root: new Map(),
+        get: function get$$1(key) {
+          var node = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.root;
+
+          if (!key.length || !node) return node && node.get('__WITH_NAME_CACHE_LEAF__');
+          return this.get(key.slice(1), node.get(key[0]));
+        },
+        set: function set$$1(key, value) {
+          var node = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.root;
+
+          if (!key.length) return node.set('__WITH_NAME_CACHE_LEAF__', value);
+          if (!node[key[0]]) node.set(key[0], new Map());
+          return this.set(key.slice(1), value, node.get(key[0]));
+        }
+      };
+    }
+
     var withNameCache = Mirror.__COMPONENT_IDENTIFIER__.__WITH_NAME_CACHE__;
     Mirror.withName = function withName() {
-      var _ref3;
+      var _name2;
 
       for (var _len = arguments.length, withName = Array(_len), _key = 0; _key < _len; _key++) {
         withName[_key] = arguments[_key];
       }
 
-      withName = (_ref3 = []).concat.apply(_ref3, toConsumableArray(withName).concat(toConsumableArray(name))).sort();
-      var key = JSON.stringify(name); // TODO: support non-string names
-      if (withNameCache[key]) return withNameCache[key];
+      withName = (_name2 = name).concat.apply(_name2, toConsumableArray(withName));
+      var cachedComponent = withNameCache.get(withName);
+      if (cachedComponent) return cachedComponent;
 
       var renamedComponent = createMirrorDecorator(_extends({}, config, { name: name }))(WrappedComponent);
       renamedComponent.__COMPONENT_IDENTIFIER__ = Mirror.__COMPONENT_IDENTIFIER__;
-      withNameCache[key] = renamedComponent;
+      if (withName.length) withNameCache.set(withName, renamedComponent);
       return renamedComponent;
     };
 
@@ -990,7 +1049,28 @@ var handleActions = function handleActions(handlers, initialState) {
   };
 };
 
-var SKIP_TOKEN$1 = '__MIRROR_SKIP_TOKEN__';
+var combine$1 = function combine$$1() {
+  for (var _len = arguments.length, streams = Array(_len), _key = 0; _key < _len; _key++) {
+    streams[_key] = arguments[_key];
+  }
+
+  if (streams[0] instanceof Array) streams = streams[0];
+  return most.combineArray(function () {
+    for (var _len2 = arguments.length, enumCollection = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      enumCollection[_key2] = arguments[_key2];
+    }
+
+    var result = {};
+    enumCollection.forEach(function (_enum_) {
+      _enum_.forEach(function (value, i, key) {
+        result[key] = value;
+      });
+    });
+    return new Enum(result);
+  }, streams);
+};
+
+var SKIP_TOKEN$2 = '__MIRROR_SKIP_TOKEN__';
 
 var combineActionsWithDefault = function combineActionsWithDefault(actionStream, otherStream) {
   return most.combine(function (action, other) {
@@ -1003,12 +1083,12 @@ var combineActionsWithDefault = function combineActionsWithDefault(actionStream,
     return {
       seed: {
         prevAction: action,
-        before: prevAction === action ? SKIP_TOKEN$1 : after
+        before: prevAction === action ? SKIP_TOKEN$2 : after
       },
-      value: before === SKIP_TOKEN$1 ? { before: before, action: action, after: after } : SKIP_TOKEN$1
+      value: before === SKIP_TOKEN$2 ? { before: before, action: action, after: after } : SKIP_TOKEN$2
     };
   }, {}).filter(function (value) {
-    return value !== SKIP_TOKEN$1;
+    return value !== SKIP_TOKEN$2;
   });
 };
 
@@ -1050,7 +1130,7 @@ var combineNested = function combineNested(streamMap) {
   var streams = keys.map(function (key) {
     return streamMap[key];
   });
-  return most.combine.apply(most, [function () {
+  return most.combineArray(function () {
     for (var _len = arguments.length, enumCollection = Array(_len), _key = 0; _key < _len; _key++) {
       enumCollection[_key] = arguments[_key];
     }
@@ -1063,7 +1143,7 @@ var combineNested = function combineNested(streamMap) {
       });
     });
     return new Enum(result);
-  }].concat(toConsumableArray(streams)));
+  }, streams);
 };
 
 var combineSimple = function combineSimple() {
@@ -1071,18 +1151,29 @@ var combineSimple = function combineSimple() {
     streams[_key] = arguments[_key];
   }
 
-  return most.combineArray(function (values) {
-    return [].concat(toConsumableArray(values));
+  if (streams[0] instanceof Array) streams = streams[0];
+  return most.combineArray(function () {
+    for (var _len2 = arguments.length, values = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      values[_key2] = arguments[_key2];
+    }
+
+    return [].concat(values);
   }, streams);
 };
 
 var addStore = MirrorBackend.addStore;
 var removeStore = MirrorBackend.removeStore;
 var updateStore = MirrorBackend.updateStore;
+var query = MirrorBackend.query;
+var root = MirrorBackend.root;
+var stores = MirrorBackend.stores;
 
 exports.addStore = addStore;
 exports.removeStore = removeStore;
 exports.updateStore = updateStore;
+exports.query = query;
+exports.root = root;
+exports.stores = stores;
 exports.handleActions = handleActions;
 exports.Enum = Enum;
 exports.shallowEqual = shallowEqual;

@@ -1,5 +1,8 @@
 import * as most from 'most'
 
-const combineSimple = (...streams) => most.combineArray(values => [...values], streams)
+const combineSimple = (...streams) => {
+  if (streams[0] instanceof Array) streams = streams[0]
+  return most.combineArray((...values) => [...values], streams)
+}
 
 export default combineSimple

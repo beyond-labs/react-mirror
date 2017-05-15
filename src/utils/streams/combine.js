@@ -2,7 +2,8 @@ import * as most from 'most'
 import Enum from '../Enum'
 
 const combine = (...streams) => {
-  return most.combine((...enumCollection) => {
+  if (streams[0] instanceof Array) streams = streams[0]
+  return most.combineArray((...enumCollection) => {
     const result = {}
     enumCollection.forEach(_enum_ => {
       _enum_.forEach((value, i, key) => {
@@ -10,7 +11,7 @@ const combine = (...streams) => {
       })
     })
     return new Enum(result)
-  }, ...streams)
+  }, streams)
 }
 
 export default combine

@@ -4,7 +4,7 @@ import Enum from '../Enum'
 const combineNested = streamMap => {
   const keys = Object.keys(streamMap)
   const streams = keys.map(key => streamMap[key])
-  return most.combine((...enumCollection) => {
+  return most.combineArray((...enumCollection) => {
     const result = {}
     enumCollection.forEach(_enum_ => {
       _enum_.forEach((value, i, key) => {
@@ -13,7 +13,7 @@ const combineNested = streamMap => {
       })
     })
     return new Enum(result)
-  }, ...streams)
+  }, streams)
 }
 
 export default combineNested

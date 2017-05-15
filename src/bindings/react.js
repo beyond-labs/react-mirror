@@ -1,6 +1,7 @@
 import * as most from 'most'
 import React from 'react'
 import warning from 'warning'
+import invariant from 'invariant'
 import MirrorBackend from '../backend'
 import shallowEqual from '../utils/shallowEqual'
 import createEventSource from '../utils/streams/eventSource'
@@ -43,6 +44,7 @@ function createMirrorDecorator(config = {}) {
         return null
       }
     }
+    const _name = WrappedComponent.displayName || WrappedComponent.name || 'Component'
 
     class Mirror extends React.Component {
       constructor(props, context) {
@@ -67,12 +69,12 @@ function createMirrorDecorator(config = {}) {
             let $state = state && state.call(this, mirror, dispatch)
             warning(
               !state || ($state && $state.subscribe),
-              'state should return a stream, did you forget a "return" statement? %s',
-              JSON.stringify(name)
+              '`state` should return a stream, did you forget a "return" statement? (at "%s")',
+              [_name].concat(name.filter(name => typeof name === 'string').join(', '))
             )
             if (!state || !$state) return {$props}
             $state = filterUnchanged(pure.stateEqual.bind(this), $state)
-              .skipWhile(state => state === undefined)
+              .filter(state => state !== undefined)
               .until($stateEnd)
             return {$state, $props}
           },
@@ -123,7 +125,6 @@ function createMirrorDecorator(config = {}) {
       }
     }
 
-    const _name = WrappedComponent.displayName || WrappedComponent.name || 'Component'
     Mirror.displayName = `Mirror(${_name})`
     Mirror.contextTypes = {id() {}}
     Mirror.childContextTypes = {id() {}}
@@ -156,16 +157,30 @@ function createMirrorDecorator(config = {}) {
       dispatch: {get: () => (createStaticCursors(), Mirror.dispatch)}
     })
 
-    Mirror.__WITH_NAME_CACHE__ = {}
+    if (Mirror === Mirror.__COMPONENT_IDENTIFIER__) {
+      Mirror.__WITH_NAME_CACHE__ = {
+        root: new Map(),
+        get(key, node = this.root) {
+          if (!key.length || !node) return node && node.get('__WITH_NAME_CACHE_LEAF__')
+          return this.get(key.slice(1), node.get(key[0]))
+        },
+        set(key, value, node = this.root) {
+          if (!key.length) return node.set('__WITH_NAME_CACHE_LEAF__', value)
+          if (!node[key[0]]) node.set(key[0], new Map())
+          return this.set(key.slice(1), value, node.get(key[0]))
+        }
+      }
+    }
+
     const withNameCache = Mirror.__COMPONENT_IDENTIFIER__.__WITH_NAME_CACHE__
     Mirror.withName = function withName(...withName) {
-      withName = [].concat(...withName, ...name).sort()
-      const key = JSON.stringify(name) // TODO: support non-string names
-      if (withNameCache[key]) return withNameCache[key]
+      withName = name.concat(...withName)
+      const cachedComponent = withNameCache.get(withName)
+      if (cachedComponent) return cachedComponent
 
       const renamedComponent = createMirrorDecorator({...config, name})(WrappedComponent)
       renamedComponent.__COMPONENT_IDENTIFIER__ = Mirror.__COMPONENT_IDENTIFIER__
-      withNameCache[key] = renamedComponent
+      if (withName.length) withNameCache.set(withName, renamedComponent)
       return renamedComponent
     }
 

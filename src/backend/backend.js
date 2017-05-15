@@ -4,7 +4,7 @@ import warning from 'warning'
 import createCursorBackend from '../cursor'
 import createCursorAPI from '../utils/createCursorAPI'
 import generateStoreId, {couldBeStoreId} from '../utils/generateStoreId'
-import combine from '../utils/streams/combine'
+import combineEnum from '../utils/streams/combineEnum'
 import createEventSource from '../utils/streams/eventSource'
 import {filterUnchangedKeyArrays} from '../utils/streams/filterUnchanged'
 
@@ -27,8 +27,8 @@ const createMirrorBackend = () => {
 
     invariant(
       !identifiers.some(couldBeStoreId),
-      'Identifiers cannot conflict with store IDs (all uppercase & alphabetical) %s',
-      JSON.stringify(identifiers.filter(couldBeStoreId))
+      'Cannot use all-uppercase identifiers ("%s") because they could conflict with internally-used IDs',
+      identifiers.find(couldBeStoreId)
     )
 
     const $storeDeleted = $queryResults.filter(() => !storeMap[store.id])
@@ -42,26 +42,37 @@ const createMirrorBackend = () => {
           get() {
             const queryIndex = store.queries.length
             store.queries.push(query)
+            store.queryTypes.push(streamName)
+            store.queryResults.push([])
             if (ADD_STREAMS_ASYNC) {
+              warning(
+                false,
+                'Accessing "mirror.%s" after a store has been added is ineffcient, you can batch queries with `updateStore` to improve performance'
+              )
               onStoreUpdated({store, op: 'update'})
             }
 
-            // TODO: startWith last value emitted
             return $queryResults
               .map(queryResults => {
                 return queryResults[store.id] ? queryResults[store.id][queryIndex] : []
               })
               .thru(filterUnchangedKeyArrays)
               .map(stores => {
-                return (streamName === '$actions' ? most.mergeArray : combine)(
+                store.queryResults[queryIndex] = stores
+                return (streamName === '$actions' ? most.mergeArray : combineEnum)(
                   stores
                     .map(id => {
                       if (id === store.id && query.length && streamName === '$state') {
                         return undefined
                       }
-                      return storeMap[id] && storeMap[id].streams[streamName]
+                      let $stream = storeMap[id] && storeMap[id].streams[streamName]
+                      if ($stream && storeMap[id] && storeMap[id].tails[streamName]) {
+                        $stream = $stream.startWith(storeMap[id].tails[streamName])
+                      }
+                      return $stream
                     })
-                    .filter(s => s)
+                    .filter(s => s),
+                  stores
                 )
               })
               .switchLatest()
@@ -86,7 +97,8 @@ const createMirrorBackend = () => {
       const dispatch = (type, payload, retryIfSelectionEmpty = true) => {
         invariant(
           storeMap[store.id],
-          "dispatching from a store that doesn't exist, hasn't been added yet, or was removed [%s]",
+          'Cannot dispatch actions ("%s") from a store ("%s") that does not exist',
+          type,
           store.id
         )
         const stores = cursorBackend.query(store.id, query)
@@ -102,8 +114,9 @@ const createMirrorBackend = () => {
             $storeDeleted.tap(() => {
               warning(
                 false,
-                "No stores matched dispatch query. While waiting for a match the store which dispatched the action unmounted, so we've had to discard the action. You could try dispatching to an action proxy? [%s]",
-                JSON.stringify({type, payload})
+                'No store matched an action ("%s"), & the dispatcher ("%s") was removed. We\'ve discarded the action. You could try dispatching the action via a proxy.',
+                type,
+                store.id
               )
             })
           )
@@ -124,14 +137,20 @@ const createMirrorBackend = () => {
 
     if (!store.streams.$actions) {
       const {push: dispatch, $stream: $actions} = createEventSource()
-      store.streams.$actions = $actions.until($storeDeleted)
+      store.streams.$actions = $actions.until($storeDeleted).multicast()
       store.streams.$actions.push = dispatch
     }
 
     if (streams) {
-      const $actions = store.streams.$actions
-      store.streams = streams(store.mirror, store.dispatch)
-      store.streams.$actions = $actions
+      const _streams = streams(store.mirror, store.dispatch)
+      Object.keys(_streams).forEach(streamName => {
+        _streams[streamName] = _streams[streamName]
+          .tap(evt => (store.tails[streamName] = evt))
+          .multicast()
+      })
+      store.streams = Object.assign(_streams, {
+        $actions: store.streams.$actions
+      })
     }
 
     ADD_STREAMS_ASYNC = true
@@ -141,13 +160,21 @@ const createMirrorBackend = () => {
     addStore(parentId, {requesting, streams, identifiers, metadata}) {
       if (!parentId) parentId = root && root.id
       const parent = storeMap[parentId]
-      invariant(parent || !root, 'Cannot add store: parent not found [%s]', parentId)
+      invariant(
+        parent || !root,
+        'Cannot add store as a child of "%s", because "%s" does not exist',
+        parentId,
+        parentId
+      )
 
       const store = {
         id: generateStoreId(),
         path: root ? parent.path.concat(parentId) : [],
         streams: {},
+        tails: {},
         queries: [],
+        queryTypes: [],
+        queryResults: [],
         children: {},
         parent
       }
@@ -163,7 +190,7 @@ const createMirrorBackend = () => {
     },
     removeStore(storeId) {
       const store = storeMap[storeId]
-      invariant(store, "Trying to remove store that doesn't exist [%s]", storeId)
+      invariant(store, 'Cannot remove a store ("%s") that does not exist', storeId)
       invariant(store !== root, 'Cannot remove root store')
 
       const traverse = store => {
@@ -181,16 +208,25 @@ const createMirrorBackend = () => {
     },
     updateStore(storeId, {requesting, streams, identifiers, metadata}) {
       const store = storeMap[storeId]
-      invariant(store, 'Trying to update store that does not exist [%s]', storeId)
+      invariant(store, 'Cannot update a store ("%s") that does not exist', storeId)
 
       updateStore(store, {requesting, streams, identifiers, metadata})
       onStoreUpdated({store, op: 'update'})
 
       return store
-    }
+    },
+    query: createCursorAPI((cursorMethods, query) => {
+      const runQuery = () => cursorBackend.query(root.id, query)
+      Object.assign(runQuery, cursorMethods)
+      return runQuery
+    }),
+    stores: storeMap
   }
 
-  root = backend.addStore(null, {identifiers: ['MIRROR/root'], metadata: {root: true}})
+  backend.root = root = backend.addStore(null, {
+    identifiers: ['MIRROR/root'],
+    metadata: {root: true}
+  })
 
   return backend
 }

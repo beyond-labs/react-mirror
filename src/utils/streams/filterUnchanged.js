@@ -12,6 +12,7 @@ const filterUnchanged = (equalityCheck, $stream) => {
 
 const keyArrayEqual = ({oldKeyArray, oldKeySet}, keyArray) => {
   if (oldKeyArray === keyArray) return true
+  if (oldKeyArray === undefined) return false
 
   for (let i in keyArray) {
     if (!oldKeySet.has(keyArray[i])) return false
@@ -22,17 +23,14 @@ const keyArrayEqual = ({oldKeyArray, oldKeySet}, keyArray) => {
 
 export const filterUnchangedKeyArrays = $stream => {
   return $stream
-    .loop(
-      (seed, keyArray) => {
-        let isEqual = keyArrayEqual(seed, keyArray)
-        if (isEqual) return {seed, value: SKIP_TOKEN}
-        return {
-          seed: {oldKeyArray: keyArray, oldKeySet: new Set(keyArray)},
-          value: keyArray
-        }
-      },
-      {oldKeyArray: [], oldKeySet: new Set()}
-    )
+    .loop((seed, keyArray) => {
+      let isEqual = keyArrayEqual(seed, keyArray)
+      if (isEqual) return {seed, value: SKIP_TOKEN}
+      return {
+        seed: {oldKeyArray: keyArray, oldKeySet: new Set(keyArray)},
+        value: keyArray
+      }
+    }, {})
     .filter(value => value !== SKIP_TOKEN)
 }
 

@@ -10,9 +10,9 @@ import combineNested from './utils/streams/combineNested'
 import combineSimple from './utils/streams/combineSimple'
 import filterUnchanged from './utils/streams/filterUnchanged'
 
-const {addStore, removeStore, updateStore} = MirrorBackend
+const {addStore, removeStore, updateStore, query, root, stores} = MirrorBackend
 
-export {addStore, removeStore, updateStore}
+export {addStore, removeStore, updateStore, query, root, stores}
 export {handleActions, Enum, shallowEqual}
 export {combine, combineActionsWith, combineNested, combineSimple, filterUnchanged}
 export default Mirror

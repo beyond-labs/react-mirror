@@ -190,21 +190,7 @@ stores[0] === stores['oigkzfajky']
 
 ##### `$stores`
 
-By comparison, `$stores` emits a value every time a store is added, removed or updated. Each value contains the cursor selection (array of store IDs) & `tree` (structural metadata with reference to local store).
-
-```js
-{
-  cursor: ['oigkzfajky']
-  tree: {
-    id: 'oigkzfajky',
-    name: 'counter'
-    instance: <Counter />,
-    queries: {$props: [], $state: [], $actions: ['oigkzfajky']},
-    children: [/* ... */],
-    parent: /* ... */
-  }
-}
-```
+By comparison, `$stores` emits a value every time a store is added, removed or updated. Each value in `$state` contains low-level structural metadata with reference to the local store. Use `$state` for advanced use cases like accessing component instances, getting children up to a certain depth or generating dependency graphs.
 
 #### **Combining Streams**
 
@@ -271,7 +257,7 @@ The `Mirror` configuration accepts `name`, `state()`, `mapToProps()` & `pure`. E
 
 ##### `name`
 
-Mirror uses `name` inside filters. `name` is a string, or array of strings.
+Mirror uses `name` inside filters. `name` is typically a string, or array of strings, but any value can be used.
 
 The static `withName` method lets you add additional names to a store. `withName` is useful for distinguishing particular instances of a component.
 
@@ -348,7 +334,7 @@ Access the wrapped component instance with `this.getWrappedInstance()`.
 
 ##### Cursors
 
-`mirror` & `dispatch` can be accessed via `this.mirror` / `this.dispatch`. This is potentially dangerous, and provided as an escape hatch only.
+`mirror` & `dispatch` can be accessed via `this.mirror` / `this.dispatch`.
 
 #### **Circular State Dependency**
 
