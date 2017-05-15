@@ -1,5 +1,5 @@
 import * as most from 'most'
 
-const combineSimple = most.combine.bind(null, (...values) => [...values])
+const combineSimple = (...streams) => most.combineArray(values => [...values], streams)
 
 export default combineSimple

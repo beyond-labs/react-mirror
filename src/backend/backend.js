@@ -1,4 +1,6 @@
 import * as most from 'most'
+import invariant from 'invariant'
+import warning from 'warning'
 import createCursorBackend from '../cursor'
 import createCursorAPI from '../utils/createCursorAPI'
 import generateStoreId, {couldBeStoreId} from '../utils/generateStoreId'
@@ -23,9 +25,11 @@ const createMirrorBackend = () => {
   ) => {
     Object.assign(store, {identifiers, metadata})
 
-    if (identifiers.some(couldBeStoreId)) {
-      // warning()
-    }
+    invariant(
+      !identifiers.some(couldBeStoreId),
+      'Identifiers cannot conflict with store IDs (all uppercase & alphabetical) %s',
+      JSON.stringify(identifiers.filter(couldBeStoreId))
+    )
 
     const $storeDeleted = $queryResults.filter(() => !storeMap[store.id])
 
@@ -42,6 +46,7 @@ const createMirrorBackend = () => {
               onStoreUpdated({store, op: 'update'})
             }
 
+            // TODO: startWith last value emitted
             return $queryResults
               .map(queryResults => {
                 return queryResults[store.id] ? queryResults[store.id][queryIndex] : []
@@ -79,11 +84,15 @@ const createMirrorBackend = () => {
 
     store.dispatch = createCursorAPI((cursorMethods, query) => {
       const dispatch = (type, payload, retryIfSelectionEmpty = true) => {
-        if (!store.id) return // warning()
+        invariant(
+          storeMap[store.id],
+          "dispatching from a store that doesn't exist, hasn't been added yet, or was removed [%s]",
+          store.id
+        )
         const stores = cursorBackend.query(store.id, query)
         if (stores.length || !retryIfSelectionEmpty) {
           stores.forEach(id => {
-            storeMap[id] && storeMap[id].streams.$actions.push({type, payload})
+            storeMap[id] && storeMap[id].streams.$actions.push({type, payload, store: id})
           })
           return
         }
@@ -91,7 +100,11 @@ const createMirrorBackend = () => {
         $queryResults
           .until(
             $storeDeleted.tap(() => {
-              // warning()
+              warning(
+                false,
+                "No stores matched dispatch query. While waiting for a match the store which dispatched the action unmounted, so we've had to discard the action. You could try dispatching to an action proxy? [%s]",
+                JSON.stringify({type, payload})
+              )
             })
           )
           .map(() => cursorBackend.query(store.id, query))
@@ -99,7 +112,9 @@ const createMirrorBackend = () => {
           .take(1)
           .observe(stores => {
             stores.forEach(id => {
-              storeMap[id] && storeMap[id].streams.$actions.push({type, payload})
+              if (storeMap[id]) {
+                storeMap[id].streams.$actions.push({type, payload, store: id})
+              }
             })
           })
       }
@@ -126,7 +141,7 @@ const createMirrorBackend = () => {
     addStore(parentId, {requesting, streams, identifiers, metadata}) {
       if (!parentId) parentId = root && root.id
       const parent = storeMap[parentId]
-      if (!parent && root) return // warning()
+      invariant(parent || !root, 'Cannot add store: parent not found [%s]', parentId)
 
       const store = {
         id: generateStoreId(),
@@ -148,8 +163,8 @@ const createMirrorBackend = () => {
     },
     removeStore(storeId) {
       const store = storeMap[storeId]
-      if (!store) return // warning()
-      if (store === root) return // warning()
+      invariant(store, "Trying to remove store that doesn't exist [%s]", storeId)
+      invariant(store !== root, 'Cannot remove root store')
 
       const traverse = store => {
         store.children.forEach(traverse)
@@ -166,7 +181,7 @@ const createMirrorBackend = () => {
     },
     updateStore(storeId, {requesting, streams, identifiers, metadata}) {
       const store = storeMap[storeId]
-      if (!store) return // warning()
+      invariant(store, 'Trying to update store that does not exist [%s]', storeId)
 
       updateStore(store, {requesting, streams, identifiers, metadata})
       onStoreUpdated({store, op: 'update'})

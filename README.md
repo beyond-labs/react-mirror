@@ -77,6 +77,7 @@ children(filter, maxStores) // Get one or more child stores (all descendants)
 all(filter, maxStores) // Same as `root().children(filter, maxStores)`
 one(filter)            // Same as `all(filter, 1)`
 parent(filter)         // Same as `parents(filter, 1)`
+child(filter)          // Same as `children(filter, 1)`
 ```
 
 #### **Two types of cursor**

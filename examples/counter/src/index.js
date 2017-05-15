@@ -1,24 +1,23 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import Mirror from '../../../index'
+import Mirror, {handleActions} from '../../../index'
 
 const Counter = Mirror({
   name: 'counter',
   state(mirror, dispatch) {
+    // mirror.$state.observe(evt => console.log(evt))
     return mirror.$actions.scan(
-      ({value}, action) => {
-        const {type, payload = 1} = action
-        switch (type) {
-          case 'INCREMENT':
-            return {value: value + payload}
-          case 'DECREMENT':
-            return {value: value - payload}
-          default:
-            return {value}
-        }
-      },
-      {value: 0}
+      handleActions(
+        {
+          INCREMENT: (value, {payload = 1}) => value + payload,
+          DECREMENT: (value, {payload = 1}) => value - payload
+        },
+        0
+      )
     )
+  },
+  mapToProps(value) {
+    return {value}
   }
 })(({value, dispatch}) => (
   <div>

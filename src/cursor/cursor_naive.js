@@ -28,7 +28,7 @@ const testFilter = (node, filter) => {
     !filter ||
     filter === node.id ||
     filter === node.component ||
-    node.name.includes(filter)
+    node.identifiers.includes(filter)
   ) {
     return true
   }

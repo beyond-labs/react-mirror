@@ -1,5 +1,6 @@
 import * as most from 'most'
 import React from 'react'
+import warning from 'warning'
 import MirrorBackend from '../backend'
 import shallowEqual from '../utils/shallowEqual'
 import createEventSource from '../utils/streams/eventSource'
@@ -63,11 +64,16 @@ function createMirrorDecorator(config = {}) {
           identifiers: [...name, Mirror.__COMPONENT_IDENTIFIER__],
           streams: (mirror, dispatch) => {
             $props = filterUnchanged(pure.propsEqual.bind(this), $props.startWith(props))
-            if (!state) return {$props}
-            let $state = filterUnchanged(
-              pure.stateEqual.bind(this),
-              state.call(this, mirror, dispatch)
-            ).until($stateEnd)
+            let $state = state && state.call(this, mirror, dispatch)
+            warning(
+              !state || ($state && $state.subscribe),
+              'state should return a stream, did you forget a "return" statement? %s',
+              JSON.stringify(name)
+            )
+            if (!state || !$state) return {$props}
+            $state = filterUnchanged(pure.stateEqual.bind(this), $state)
+              .skipWhile(state => state === undefined)
+              .until($stateEnd)
             return {$state, $props}
           },
           metadata: {
@@ -160,6 +166,7 @@ function createMirrorDecorator(config = {}) {
       const renamedComponent = createMirrorDecorator({...config, name})(WrappedComponent)
       renamedComponent.__COMPONENT_IDENTIFIER__ = Mirror.__COMPONENT_IDENTIFIER__
       withNameCache[key] = renamedComponent
+      return renamedComponent
     }
 
     return Mirror

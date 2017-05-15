@@ -6,6 +6,8 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 
 require('regenerator-runtime/runtime');
 var most = require('most');
+var invariant = _interopDefault(require('invariant'));
+var warning = _interopDefault(require('warning'));
 var React = _interopDefault(require('react'));
 
 var classCallCheck = function (instance, Constructor) {
@@ -169,7 +171,7 @@ var getParents = function getParents(node) {
 };
 
 var testFilter = function testFilter(node, filter) {
-  if (!filter || filter === node.id || filter === node.component || node.name.includes(filter)) {
+  if (!filter || filter === node.id || filter === node.component || node.identifiers.includes(filter)) {
     return true;
   }
   return false;
@@ -244,40 +246,46 @@ var createCursorAPI = function createCursorAPI(enhancer) {
   var cursorMethods = {
     root: function root() {
       query = [{ op: 'root' }];
-      return createCursorAPI(cursorMethods, query);
+      return createCursorAPI(enhancer, query);
     },
     parents: function parents() {
       var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
       var maxStores = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : Infinity;
 
       query = query.concat({ op: 'parents', filter: filter, maxStores: maxStores });
-      return createCursorAPI(cursorMethods, query);
+      return createCursorAPI(enhancer, query);
     },
     children: function children() {
       var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
       var maxStores = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : Infinity;
 
       query = query.concat({ op: 'children', filter: filter, maxStores: maxStores });
-      return createCursorAPI(cursorMethods, query);
+      return createCursorAPI(enhancer, query);
     },
     all: function all() {
       var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
       var maxStores = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : Infinity;
 
       query = [{ op: 'root' }, { op: 'children', filter: filter, maxStores: maxStores }];
-      return createCursorAPI(cursorMethods, query);
+      return createCursorAPI(enhancer, query);
     },
     one: function one() {
       var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
       query = [{ op: 'root' }, { op: 'children', filter: filter, maxStores: 1 }];
-      return createCursorAPI(cursorMethods, query);
+      return createCursorAPI(enhancer, query);
     },
     parent: function parent() {
       var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
       query = query.concat({ op: 'parents', filter: filter, maxStores: 1 });
-      return createCursorAPI(cursorMethods, query);
+      return createCursorAPI(enhancer, query);
+    },
+    child: function child() {
+      var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+
+      query = query.concat({ op: 'children', filter: filter, maxStores: 1 });
+      return createCursorAPI(enhancer, query);
     }
   };
   return enhancer(cursorMethods, query);
@@ -549,9 +557,7 @@ var createMirrorBackend = function createMirrorBackend() {
 
     Object.assign(store, { identifiers: identifiers, metadata: metadata });
 
-    if (identifiers.some(couldBeStoreId)) {
-      // warning()
-    }
+    invariant(!identifiers.some(couldBeStoreId), 'Identifiers cannot conflict with store IDs (all uppercase & alphabetical) %s', JSON.stringify(identifiers.filter(couldBeStoreId)));
 
     var $storeDeleted = $queryResults.filter(function () {
       return !storeMap[store.id];
@@ -570,6 +576,7 @@ var createMirrorBackend = function createMirrorBackend() {
               onStoreUpdated({ store: store, op: 'update' });
             }
 
+            // TODO: startWith last value emitted
             return $queryResults.map(function (queryResults) {
               return queryResults[store.id] ? queryResults[store.id][queryIndex] : [];
             }).thru(filterUnchangedKeyArrays).map(function (stores) {
@@ -603,24 +610,26 @@ var createMirrorBackend = function createMirrorBackend() {
       var dispatch = function dispatch(type, payload) {
         var retryIfSelectionEmpty = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
-        if (!store.id) return; // warning()
+        invariant(storeMap[store.id], "dispatching from a store that doesn't exist, hasn't been added yet, or was removed [%s]", store.id);
         var stores = cursorBackend.query(store.id, query);
         if (stores.length || !retryIfSelectionEmpty) {
           stores.forEach(function (id) {
-            storeMap[id] && storeMap[id].streams.$actions.push({ type: type, payload: payload });
+            storeMap[id] && storeMap[id].streams.$actions.push({ type: type, payload: payload, store: id });
           });
           return;
         }
 
         $queryResults.until($storeDeleted.tap(function () {
-          // warning()
+          warning(false, "No stores matched dispatch query. While waiting for a match the store which dispatched the action unmounted, so we've had to discard the action. You could try dispatching to an action proxy? [%s]", JSON.stringify({ type: type, payload: payload }));
         })).map(function () {
           return cursorBackend.query(store.id, query);
         }).filter(function (stores) {
           return stores.length;
         }).take(1).observe(function (stores) {
           stores.forEach(function (id) {
-            storeMap[id] && storeMap[id].streams.$actions.push({ type: type, payload: payload });
+            if (storeMap[id]) {
+              storeMap[id].streams.$actions.push({ type: type, payload: payload, store: id });
+            }
           });
         });
       };
@@ -655,7 +664,7 @@ var createMirrorBackend = function createMirrorBackend() {
 
       if (!parentId) parentId = root && root.id;
       var parent = storeMap[parentId];
-      if (!parent && root) return; // warning()
+      invariant(parent || !root, 'Cannot add store: parent not found [%s]', parentId);
 
       var store = {
         id: generateStoreId(),
@@ -677,8 +686,8 @@ var createMirrorBackend = function createMirrorBackend() {
     },
     removeStore: function removeStore(storeId) {
       var store = storeMap[storeId];
-      if (!store) return; // warning()
-      if (store === root) return; // warning()
+      invariant(store, "Trying to remove store that doesn't exist [%s]", storeId);
+      invariant(store !== root, 'Cannot remove root store');
 
       var traverse = function traverse(store) {
         store.children.forEach(traverse);
@@ -700,7 +709,7 @@ var createMirrorBackend = function createMirrorBackend() {
           metadata = _ref4.metadata;
 
       var store = storeMap[storeId];
-      if (!store) return; // warning()
+      invariant(store, 'Trying to update store that does not exist [%s]', storeId);
 
       _updateStore(store, { requesting: requesting, streams: streams, identifiers: identifiers, metadata: metadata });
       onStoreUpdated({ store: store, op: 'update' });
@@ -809,8 +818,12 @@ function createMirrorDecorator() {
           identifiers: [].concat(toConsumableArray(name), [Mirror.__COMPONENT_IDENTIFIER__]),
           streams: function streams(mirror, dispatch) {
             $props = filterUnchanged(pure.propsEqual.bind(_this), $props.startWith(props));
-            if (!state) return { $props: $props };
-            var $state = filterUnchanged(pure.stateEqual.bind(_this), state.call(_this, mirror, dispatch)).until($stateEnd);
+            var $state = state && state.call(_this, mirror, dispatch);
+            warning(!state || $state && $state.subscribe, 'state should return a stream, did you forget a "return" statement? %s', JSON.stringify(name));
+            if (!state || !$state) return { $props: $props };
+            $state = filterUnchanged(pure.stateEqual.bind(_this), $state).skipWhile(function (state) {
+              return state === undefined;
+            }).until($stateEnd);
             return { $state: $state, $props: $props };
           },
           metadata: {
@@ -939,11 +952,43 @@ function createMirrorDecorator() {
       var renamedComponent = createMirrorDecorator(_extends({}, config, { name: name }))(WrappedComponent);
       renamedComponent.__COMPONENT_IDENTIFIER__ = Mirror.__COMPONENT_IDENTIFIER__;
       withNameCache[key] = renamedComponent;
+      return renamedComponent;
     };
 
     return Mirror;
   };
 }
+
+var isAction = function isAction(action) {
+  if (action && typeof action.type === 'string' && action.hasOwnProperty('payload') && typeof action.store === 'string') {
+    return true;
+  }
+  return false;
+};
+
+var findAction = function findAction(args) {
+  var i = args.length;
+  while (i--) {
+    if (isAction(args[i])) return args[i];
+    if (args[i] && isAction(args[i].action)) return args[i].action;
+  }
+  return null;
+};
+
+var handleActions = function handleActions(handlers, initialState) {
+  return function () {
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    var action = findAction(args);
+    var state = args[0] === undefined ? initialState : args[0];
+
+    if (!action || !handlers[action.type]) return state;
+    if (initialState) return handlers[action.type](state, action);
+    return handlers[action.type](action);
+  };
+};
 
 var SKIP_TOKEN$1 = '__MIRROR_SKIP_TOKEN__';
 
@@ -1021,13 +1066,15 @@ var combineNested = function combineNested(streamMap) {
   }].concat(toConsumableArray(streams)));
 };
 
-var combineSimple = most.combine.bind(null, function () {
-  for (var _len = arguments.length, values = Array(_len), _key = 0; _key < _len; _key++) {
-    values[_key] = arguments[_key];
+var combineSimple = function combineSimple() {
+  for (var _len = arguments.length, streams = Array(_len), _key = 0; _key < _len; _key++) {
+    streams[_key] = arguments[_key];
   }
 
-  return [].concat(values);
-});
+  return most.combineArray(function (values) {
+    return [].concat(toConsumableArray(values));
+  }, streams);
+};
 
 var addStore = MirrorBackend.addStore;
 var removeStore = MirrorBackend.removeStore;
@@ -1036,9 +1083,13 @@ var updateStore = MirrorBackend.updateStore;
 exports.addStore = addStore;
 exports.removeStore = removeStore;
 exports.updateStore = updateStore;
+exports.handleActions = handleActions;
+exports.Enum = Enum;
+exports.shallowEqual = shallowEqual;
 exports.combine = combine$1;
 exports.combineActionsWith = combineActionsWith;
 exports.combineNested = combineNested;
 exports.combineSimple = combineSimple;
+exports.filterUnchanged = filterUnchanged;
 exports['default'] = createMirrorDecorator;
 //# sourceMappingURL=index.js.map

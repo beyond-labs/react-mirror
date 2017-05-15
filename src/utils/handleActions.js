@@ -14,24 +14,18 @@ const findAction = args => {
   let i = args.length
   while (i--) {
     if (isAction(args[i])) return args[i]
-    if (isAction(args[i].action)) return args[i].action
+    if (args[i] && isAction(args[i].action)) return args[i].action
   }
   return null
 }
 
-const combineArrays = (arr1, arr2) => {
-  const maxLength = Math.max(arr1.length, arr2.length)
-  const arr = Array(maxLength).fill()
-  return arr.map((v, i) => (arr1[i] !== undefined ? arr1[i] : arr2[i]))
-}
-
-const handleActions = (handlers, ...defaultArgs) => (...args) => {
-  args = combineArrays(args, defaultArgs)
-
+const handleActions = (handlers, initialState) => (...args) => {
   let action = findAction(args)
+  const state = args[0] === undefined ? initialState : args[0]
 
-  if (!action || !handlers[action.type]) return args[0]
-  return handlers[action.type](...args)
+  if (!action || !handlers[action.type]) return state
+  if (initialState) return handlers[action.type](state, action)
+  return handlers[action.type](action)
 }
 
 export default handleActions
