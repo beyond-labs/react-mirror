@@ -14,8 +14,8 @@ const Input = Mirror({
       )
     )
   },
-  mapToProps(state, {value, ...props}) {
-    return {...props, value: value || state.value}
+  mapToProps(state, props) {
+    return {...props, ...state, value: props.value || state.value}
   }
 })(function Input({dispatch, ...props}) {
   return (
