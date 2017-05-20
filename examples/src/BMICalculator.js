@@ -1,6 +1,5 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
-import Mirror, {handleActions, combineSimple} from '../../../index'
+import Mirror, {handleActions, combineSimple} from '../../index'
 
 const Input = Mirror({
   name: 'input',
@@ -27,12 +26,11 @@ const Input = Mirror({
   )
 })
 
-export const BMICalculator = Mirror({
+const BMICalculator = Mirror({
   state(mirror) {
     const weight = mirror
       .child('input/weight')
       .$state.map(([state = {value: 70}]) => Number(state.value))
-    // return weight.map(weight => ({weight}))
     const height = mirror
       .child('input/height')
       .$state.map(([state = {value: 170}]) => Number(state.value))
@@ -58,4 +56,4 @@ export const BMICalculator = Mirror({
   )
 })
 
-ReactDOM.render(<BMICalculator />, document.getElementById('root'))
+export default BMICalculator
