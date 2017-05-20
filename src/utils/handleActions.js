@@ -24,7 +24,7 @@ const handleActions = (handlers, initialState) => (...args) => {
   const state = args[0] === undefined ? initialState : args[0]
 
   if (!action || !handlers[action.type]) return state
-  if (initialState) return handlers[action.type](state, action)
+  if (initialState !== undefined) return handlers[action.type](state, action)
   return handlers[action.type](action)
 }
 

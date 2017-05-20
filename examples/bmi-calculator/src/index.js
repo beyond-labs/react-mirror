@@ -7,22 +7,20 @@ console.log(stores)
 const Input = Mirror({
   name: 'input',
   state(mirror) {
-    return mirror.$actions
-      .tap(action => console.log('action', action))
-      .scan(
-        handleActions(
-          {
-            UPDATE_VALUE: (state, {payload: value}) => ({value})
-          },
-          {value: ''}
-        )
+    return mirror.$actions.scan(
+      handleActions(
+        {
+          UPDATE_VALUE: (state, {payload: value}) => ({value})
+        },
+        {value: this.props.initialValue || this.props.value || ''}
       )
-      .tap(evt => console.log('state', evt))
+    )
   },
-  mapToProps(state, {initialValue, ...props}) {
-    return {...props, value: (state && state.value) || initialValue}
+  mapToProps(state, {value, ...props}) {
+    return {...props, value: props.value || state.value}
   }
 })(function Input({dispatch, ...props}) {
+  console.log(props)
   return (
     <input
       type="range"
@@ -37,6 +35,7 @@ export const BMICalculator = Mirror({
     const weight = mirror
       .child('input/weight')
       .$state.map(([state = {value: 70}]) => Number(state.value))
+    // return weight.map(weight => ({weight}))
     const height = mirror
       .child('input/height')
       .$state.map(([state = {value: 170}]) => Number(state.value))
@@ -49,15 +48,14 @@ export const BMICalculator = Mirror({
   const HeightInput = Input.withName('input/height')
   return (
     <div>
-      Context<br />
-      <span className="value">BMI: {BMI}</span>
+      <span className="value">BMI: {BMI}</span><br />
       <label>
-        Weight ({weight} kg)
-        <WeightInput value={weight} min={40} max={140} />
+        Weight ({weight} kg)<br />
+        <WeightInput value={weight} min={40} max={140} /><br />
       </label>
       <label>
-        Height ({height} cm)
-        <HeightInput value={height} min={140} max={210} />
+        Height ({height} cm)<br />
+        <HeightInput value={height} min={140} max={210} /><br />
       </label>
     </div>
   )

@@ -1,19 +1,25 @@
 import * as most from 'most'
 
 const eventSource = () => {
-  let syncBuffer = []
-  let push = event => syncBuffer.push(event)
-  function* eventGenerator() {
-    while (syncBuffer.length) {
-      yield Promise.resolve(syncBuffer.shift())
+  let buffer = []
+  let resolve
+  let push = event => {
+    if (resolve) {
+      resolve(event)
+      resolve = null
+    } else {
+      buffer.push(event)
     }
-    const setPush = resolve => (push = resolve)
+  }
+  const setResolve = r => (resolve = r)
+  function* eventGenerator() {
     while (true) {
-      yield new Promise(setPush)
+      if (buffer.length) yield Promise.resolve(buffer.shift())
+      else yield new Promise(setResolve)
     }
   }
   return {
-    push: event => push(event),
+    push,
     end: () => eventGenerator.return(),
     $stream: most.generate(eventGenerator)
   }

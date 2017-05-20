@@ -257,7 +257,7 @@ The `Mirror` configuration accepts `name`, `state()`, `mapToProps()` & `pure`. E
 
 ##### `name`
 
-Mirror uses `name` inside filters. `name` is typically a string, or array of strings, but any value can be used.
+Mirror uses `name` inside filters. `name` is a string, or array of strings.
 
 The static `withName` method lets you add additional names to a store. `withName` is useful for distinguishing particular instances of a component.
 

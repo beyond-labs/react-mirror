@@ -5,7 +5,6 @@ import Mirror, {handleActions} from '../../../index'
 const Counter = Mirror({
   name: 'counter',
   state(mirror, dispatch) {
-    // mirror.$state.observe(evt => console.log(evt))
     return mirror.$actions.scan(
       handleActions(
         {

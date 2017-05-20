@@ -30,10 +30,10 @@ function createMirrorDecorator(config = {}) {
     }
     if (!pure) pure = {propsEqual() {}, stateEqual() {}, propsStateEqual() {}}
     if (pure === true) pure = {}
-    Object.assign(
+    pure = Object.assign(
       {
         propsEqual: shallowEqual,
-        shallowEqual: shallowEqual,
+        stateEqual: shallowEqual,
         propsStateEqual: shallowEqual
       },
       pure
@@ -45,10 +45,16 @@ function createMirrorDecorator(config = {}) {
       }
     }
     const _name = WrappedComponent.displayName || WrappedComponent.name || 'Component'
+    invariant(
+      name.every(name => typeof name === 'string'),
+      '`name` should be a string or array of strings (at "%s")',
+      _name
+    )
 
     class Mirror extends React.Component {
       constructor(props, context) {
         super()
+        this.props = props
         this.state = {updateCount: 0, props: undefined}
 
         let {
@@ -157,30 +163,20 @@ function createMirrorDecorator(config = {}) {
       dispatch: {get: () => (createStaticCursors(), Mirror.dispatch)}
     })
 
-    if (Mirror === Mirror.__COMPONENT_IDENTIFIER__) {
-      Mirror.__WITH_NAME_CACHE__ = {
-        root: new Map(),
-        get(key, node = this.root) {
-          if (!key.length || !node) return node && node.get('__WITH_NAME_CACHE_LEAF__')
-          return this.get(key.slice(1), node.get(key[0]))
-        },
-        set(key, value, node = this.root) {
-          if (!key.length) return node.set('__WITH_NAME_CACHE_LEAF__', value)
-          if (!node[key[0]]) node.set(key[0], new Map())
-          return this.set(key.slice(1), value, node.get(key[0]))
-        }
-      }
-    }
+    Mirror.__WITH_NAME_CACHE__ = Mirror.__COMPONENT_IDENTIFIER__.__WITH_NAME_CACHE__ || {}
 
-    const withNameCache = Mirror.__COMPONENT_IDENTIFIER__.__WITH_NAME_CACHE__
     Mirror.withName = function withName(...withName) {
       withName = name.concat(...withName)
-      const cachedComponent = withNameCache.get(withName)
+      const key = JSON.stringify(withName.sort())
+      const cachedComponent = Mirror.__WITH_NAME_CACHE__[key]
       if (cachedComponent) return cachedComponent
 
-      const renamedComponent = createMirrorDecorator({...config, name})(WrappedComponent)
+      const renamedComponent = createMirrorDecorator({
+        ...config,
+        name: withName
+      })(WrappedComponent)
       renamedComponent.__COMPONENT_IDENTIFIER__ = Mirror.__COMPONENT_IDENTIFIER__
-      if (withName.length) withNameCache.set(withName, renamedComponent)
+      if (withName.length) Mirror.__WITH_NAME_CACHE__[key] = renamedComponent
       return renamedComponent
     }
 

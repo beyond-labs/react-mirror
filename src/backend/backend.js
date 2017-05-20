@@ -15,9 +15,11 @@ const createMirrorBackend = () => {
 
   const {push: onStoreUpdated, $stream: $storeUpdated} = createEventSource()
 
-  const $queryResults = $storeUpdated.map(({store, op}) => {
-    return cursorBackend.updateNode(root, {path: store.path, op})
-  })
+  const $queryResults = $storeUpdated
+    .map(({store, op}) => {
+      return cursorBackend.updateNode(root, {path: store.path, op})
+    })
+    .multicast()
 
   const updateStore = (
     store,
@@ -47,7 +49,8 @@ const createMirrorBackend = () => {
             if (ADD_STREAMS_ASYNC) {
               warning(
                 false,
-                'Accessing "mirror.%s" after a store has been added is ineffcient, you can batch queries with `updateStore` to improve performance'
+                'Accessing "mirror.%s" after a store has been added is ineffcient, you can batch queries with `updateStore` to improve performance',
+                streamName
               )
               onStoreUpdated({store, op: 'update'})
             }

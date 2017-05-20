@@ -245,53 +245,53 @@ var createCursorAPI = function createCursorAPI(enhancer) {
 
   var cursorMethods = {
     root: function root() {
-      query = [{ op: 'root' }];
-      return createCursorAPI(enhancer, query);
+      var newQuery = [{ op: 'root' }];
+      return createCursorAPI(enhancer, newQuery);
     },
     parents: function parents() {
       var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
       var maxStores = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : Infinity;
 
       filter = filter && (filter.__COMPONENT_IDENTIFIER__ || filter);
-      query = query.concat({ op: 'parents', filter: filter, maxStores: maxStores });
-      return createCursorAPI(enhancer, query);
+      var newQuery = query.concat({ op: 'parents', filter: filter, maxStores: maxStores });
+      return createCursorAPI(enhancer, newQuery);
     },
     children: function children() {
       var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
       var maxStores = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : Infinity;
 
       filter = filter && (filter.__COMPONENT_IDENTIFIER__ || filter);
-      query = query.concat({ op: 'children', filter: filter, maxStores: maxStores });
-      return createCursorAPI(enhancer, query);
+      var newQuery = query.concat({ op: 'children', filter: filter, maxStores: maxStores });
+      return createCursorAPI(enhancer, newQuery);
     },
     all: function all() {
       var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
       var maxStores = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : Infinity;
 
       filter = filter && (filter.__COMPONENT_IDENTIFIER__ || filter);
-      query = [{ op: 'root' }, { op: 'children', filter: filter, maxStores: maxStores }];
-      return createCursorAPI(enhancer, query);
+      var newQuery = [{ op: 'root' }, { op: 'children', filter: filter, maxStores: maxStores }];
+      return createCursorAPI(enhancer, newQuery);
     },
     one: function one() {
       var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
       filter = filter && (filter.__COMPONENT_IDENTIFIER__ || filter);
-      query = [{ op: 'root' }, { op: 'children', filter: filter, maxStores: 1 }];
-      return createCursorAPI(enhancer, query);
+      var newQuery = [{ op: 'root' }, { op: 'children', filter: filter, maxStores: 1 }];
+      return createCursorAPI(enhancer, newQuery);
     },
     parent: function parent() {
       var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
       filter = filter && (filter.__COMPONENT_IDENTIFIER__ || filter);
-      query = query.concat({ op: 'parents', filter: filter, maxStores: 1 });
-      return createCursorAPI(enhancer, query);
+      var newQuery = query.concat({ op: 'parents', filter: filter, maxStores: 1 });
+      return createCursorAPI(enhancer, newQuery);
     },
     child: function child() {
       var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
       filter = filter && (filter.__COMPONENT_IDENTIFIER__ || filter);
-      query = query.concat({ op: 'children', filter: filter, maxStores: 1 });
-      return createCursorAPI(enhancer, query);
+      var newQuery = query.concat({ op: 'children', filter: filter, maxStores: 1 });
+      return createCursorAPI(enhancer, newQuery);
     }
   };
   return enhancer(cursorMethods, query);
@@ -425,6 +425,8 @@ var SKIP_TOKEN = '__MIRROR_SKIP_TOKEN__';
 
 /*
   Combines streams of normal values into a stream of Enums
+
+  Emits values immediately, w/o waiting for input streams to emit their first value
 */
 var combineEnum = function combineEnum(streams, ids) {
   if (!streams.length) return most.of(new Enum());
@@ -439,7 +441,7 @@ var combineEnum = function combineEnum(streams, ids) {
     });
     return new Enum(result);
   }, streams.map(function ($stream) {
-    var $start = most.of([SKIP_TOKEN]).until($stream);
+    var $start = most.of(SKIP_TOKEN).until($stream);
     return $start.concat($stream);
   }));
 };
@@ -447,44 +449,47 @@ var combineEnum = function combineEnum(streams, ids) {
 var eventSource$1 = function eventSource() {
   var _marked = [eventGenerator].map(regeneratorRuntime.mark);
 
-  var syncBuffer = [];
-  var _push = function push(event) {
-    return syncBuffer.push(event);
+  var buffer = [];
+  var resolve = void 0;
+  var push = function push(event) {
+    if (resolve) {
+      resolve(event);
+      resolve = null;
+    } else {
+      buffer.push(event);
+    }
+  };
+  var setResolve = function setResolve(r) {
+    return resolve = r;
   };
   function eventGenerator() {
-    var setPush;
     return regeneratorRuntime.wrap(function eventGenerator$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
-            if (!syncBuffer.length) {
-              _context.next = 5;
+            
+
+            if (!buffer.length) {
+              _context.next = 6;
               break;
             }
 
-            _context.next = 3;
-            return Promise.resolve(syncBuffer.shift());
+            _context.next = 4;
+            return Promise.resolve(buffer.shift());
 
-          case 3:
+          case 4:
+            _context.next = 8;
+            break;
+
+          case 6:
+            _context.next = 8;
+            return new Promise(setResolve);
+
+          case 8:
             _context.next = 0;
             break;
 
-          case 5:
-            setPush = function setPush(resolve) {
-              return _push = resolve;
-            };
-
-          case 6:
-            
-
-            _context.next = 9;
-            return new Promise(setPush);
-
-          case 9:
-            _context.next = 6;
-            break;
-
-          case 11:
+          case 10:
           case 'end':
             return _context.stop();
         }
@@ -492,9 +497,7 @@ var eventSource$1 = function eventSource() {
     }, _marked[0], this);
   }
   return {
-    push: function push(event) {
-      return _push(event);
-    },
+    push: push,
     end: function end() {
       return eventGenerator.return();
     },
@@ -555,7 +558,7 @@ var createMirrorBackend = function createMirrorBackend() {
         op = _ref.op;
 
     return cursorBackend.updateNode(root, { path: store.path, op: op });
-  });
+  }).multicast();
 
   var _updateStore = function _updateStore(store, _ref2) {
     var _ref2$requesting = _ref2.requesting,
@@ -586,7 +589,7 @@ var createMirrorBackend = function createMirrorBackend() {
             store.queryTypes.push(streamName);
             store.queryResults.push([]);
             if (ADD_STREAMS_ASYNC) {
-              warning(false, 'Accessing "mirror.%s" after a store has been added is ineffcient, you can batch queries with `updateStore` to improve performance');
+              warning(false, 'Accessing "mirror.%s" after a store has been added is ineffcient, you can batch queries with `updateStore` to improve performance', streamName);
               onStoreUpdated({ store: store, op: 'update' });
             }
 
@@ -820,9 +823,9 @@ function createMirrorDecorator() {
       propsStateEqual: function propsStateEqual() {}
     };
     if (pure === true) pure = {};
-    Object.assign({
+    pure = Object.assign({
       propsEqual: shallowEqual,
-      shallowEqual: shallowEqual,
+      stateEqual: shallowEqual,
       propsStateEqual: shallowEqual
     }, pure);
 
@@ -832,6 +835,9 @@ function createMirrorDecorator() {
       };
     }
     var _name = WrappedComponent.displayName || WrappedComponent.name || 'Component';
+    invariant(name.every(function (name) {
+      return typeof name === 'string';
+    }), '`name` should be a string or array of strings (at "%s")', _name);
 
     var Mirror = function (_React$Component) {
       inherits(Mirror, _React$Component);
@@ -841,6 +847,7 @@ function createMirrorDecorator() {
 
         var _this = possibleConstructorReturn(this, (Mirror.__proto__ || Object.getPrototypeOf(Mirror)).call(this));
 
+        _this.props = props;
         _this.state = { updateCount: 0, props: undefined };
 
         var _createEventSource = eventSource$1(),
@@ -977,26 +984,8 @@ function createMirrorDecorator() {
         } }
     });
 
-    if (Mirror === Mirror.__COMPONENT_IDENTIFIER__) {
-      Mirror.__WITH_NAME_CACHE__ = {
-        root: new Map(),
-        get: function get$$1(key) {
-          var node = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.root;
+    Mirror.__WITH_NAME_CACHE__ = Mirror.__COMPONENT_IDENTIFIER__.__WITH_NAME_CACHE__ || {};
 
-          if (!key.length || !node) return node && node.get('__WITH_NAME_CACHE_LEAF__');
-          return this.get(key.slice(1), node.get(key[0]));
-        },
-        set: function set$$1(key, value) {
-          var node = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.root;
-
-          if (!key.length) return node.set('__WITH_NAME_CACHE_LEAF__', value);
-          if (!node[key[0]]) node.set(key[0], new Map());
-          return this.set(key.slice(1), value, node.get(key[0]));
-        }
-      };
-    }
-
-    var withNameCache = Mirror.__COMPONENT_IDENTIFIER__.__WITH_NAME_CACHE__;
     Mirror.withName = function withName() {
       var _name2;
 
@@ -1005,12 +994,15 @@ function createMirrorDecorator() {
       }
 
       withName = (_name2 = name).concat.apply(_name2, toConsumableArray(withName));
-      var cachedComponent = withNameCache.get(withName);
+      var key = JSON.stringify(withName.sort());
+      var cachedComponent = Mirror.__WITH_NAME_CACHE__[key];
       if (cachedComponent) return cachedComponent;
 
-      var renamedComponent = createMirrorDecorator(_extends({}, config, { name: name }))(WrappedComponent);
+      var renamedComponent = createMirrorDecorator(_extends({}, config, {
+        name: withName
+      }))(WrappedComponent);
       renamedComponent.__COMPONENT_IDENTIFIER__ = Mirror.__COMPONENT_IDENTIFIER__;
-      if (withName.length) withNameCache.set(withName, renamedComponent);
+      if (withName.length) Mirror.__WITH_NAME_CACHE__[key] = renamedComponent;
       return renamedComponent;
     };
 
@@ -1044,7 +1036,7 @@ var handleActions = function handleActions(handlers, initialState) {
     var state = args[0] === undefined ? initialState : args[0];
 
     if (!action || !handlers[action.type]) return state;
-    if (initialState) return handlers[action.type](state, action);
+    if (initialState !== undefined) return handlers[action.type](state, action);
     return handlers[action.type](action);
   };
 };

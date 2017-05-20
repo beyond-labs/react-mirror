@@ -1,3 +1,5 @@
+import * as most from 'most'
+
 const SKIP_TOKEN = '__MIRROR_SKIP_TOKEN__'
 
 const filterUnchanged = (equalityCheck, $stream) => {

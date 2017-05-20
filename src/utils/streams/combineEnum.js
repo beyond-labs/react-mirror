@@ -19,7 +19,7 @@ const combineEnum = (streams, ids) => {
       return new Enum(result)
     },
     streams.map($stream => {
-      const $start = most.of([SKIP_TOKEN]).until($stream)
+      const $start = most.of(SKIP_TOKEN).until($stream)
       return $start.concat($stream)
     })
   )
