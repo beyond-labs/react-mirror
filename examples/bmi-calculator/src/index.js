@@ -1,8 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import Mirror, {handleActions, combineSimple, stores} from '../../../index'
-
-console.log(stores)
+import Mirror, {handleActions, combineSimple} from '../../../index'
 
 const Input = Mirror({
   name: 'input',
@@ -17,10 +15,9 @@ const Input = Mirror({
     )
   },
   mapToProps(state, {value, ...props}) {
-    return {...props, value: props.value || state.value}
+    return {...props, value: value || state.value}
   }
 })(function Input({dispatch, ...props}) {
-  console.log(props)
   return (
     <input
       type="range"

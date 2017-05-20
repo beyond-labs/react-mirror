@@ -2,6 +2,7 @@ const hasOwn = Object.prototype.hasOwnProperty
 
 const shallowEqual = (a, b) => {
   if (a === b) return true
+  if (typeof a !== 'object' || typeof b !== 'object' || !a !== !b) return false
 
   let countA = 0
   let countB = 0

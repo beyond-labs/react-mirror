@@ -10,6 +10,22 @@ var invariant = _interopDefault(require('invariant'));
 var warning = _interopDefault(require('warning'));
 var React = _interopDefault(require('react'));
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+  return typeof obj;
+} : function (obj) {
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+};
+
+
+
+
+
+
+
+
+
+
+
 var classCallCheck = function (instance, Constructor) {
   if (!(instance instanceof Constructor)) {
     throw new TypeError("Cannot call a class as a function");
@@ -771,6 +787,7 @@ var hasOwn = Object.prototype.hasOwnProperty;
 
 var shallowEqual = function shallowEqual(a, b) {
   if (a === b) return true;
+  if ((typeof a === 'undefined' ? 'undefined' : _typeof(a)) !== 'object' || (typeof b === 'undefined' ? 'undefined' : _typeof(b)) !== 'object' || !a !== !b) return false;
 
   var countA = 0;
   var countB = 0;
@@ -809,7 +826,8 @@ function createMirrorDecorator() {
         name = _config$name === undefined ? [] : _config$name,
         state = config.state,
         mapToProps = config.mapToProps,
-        pure = config.pure;
+        _config$pure = config.pure,
+        pure = _config$pure === undefined ? true : _config$pure;
 
     if (!(name instanceof Array)) name = [name];
     if (typeof mapToProps !== 'function') {

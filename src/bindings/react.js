@@ -23,7 +23,7 @@ const instantiseMapToProps = mapToProps => {
 
 function createMirrorDecorator(config = {}) {
   return function decorateWithMirror(WrappedComponent) {
-    let {name = [], state, mapToProps, pure} = config
+    let {name = [], state, mapToProps, pure = true} = config
     if (!(name instanceof Array)) name = [name]
     if (typeof mapToProps !== 'function') {
       mapToProps = (state, props) => ({...props, ...state})
