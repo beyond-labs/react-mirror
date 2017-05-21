@@ -876,11 +876,11 @@ function createMirrorDecorator() {
           identifiers: [].concat(toConsumableArray(name), [Mirror.__COMPONENT_IDENTIFIER__]),
           streams: function streams(mirror, dispatch) {
             $props = filterUnchanged(pure.propsEqual.bind(_this), $props.startWith(props));
-            var $state = state && state.call(_this, mirror, dispatch);
+            var $state = typeof state === 'function' && state.call(_this, mirror, dispatch);
             warning(!state || $state && $state.subscribe, '`state` should return a stream, did you forget a "return" statement? (at "%s")', [_name].concat(name.filter(function (name) {
               return typeof name === 'string';
             }).join(', ')));
-            if (!state || !$state) return { $props: $props };
+            if (!state || !$state || !$state.subscribe) return { $props: $props };
             $state = filterUnchanged(pure.stateEqual.bind(_this), $state).filter(function (state) {
               return state !== undefined;
             });

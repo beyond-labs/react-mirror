@@ -65,13 +65,13 @@ function createMirrorDecorator(config = {}) {
           identifiers: [...name, Mirror.__COMPONENT_IDENTIFIER__],
           streams: (mirror, dispatch) => {
             $props = filterUnchanged(pure.propsEqual.bind(this), $props.startWith(props))
-            let $state = state && state.call(this, mirror, dispatch)
+            let $state = typeof state === 'function' && state.call(this, mirror, dispatch)
             warning(
               !state || ($state && $state.subscribe),
               '`state` should return a stream, did you forget a "return" statement? (at "%s")',
               [_name].concat(name.filter(name => typeof name === 'string').join(', '))
             )
-            if (!state || !$state) return {$props}
+            if (!state || !$state || !$state.subscribe) return {$props}
             $state = filterUnchanged(pure.stateEqual.bind(this), $state).filter(
               state => state !== undefined
             )
