@@ -345,7 +345,7 @@ var Enum = function (_Array) {
   inherits(Enum, _Array);
 
   function Enum() {
-    var _ref;
+    var _babelHelpers$get;
 
     var obj = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     classCallCheck(this, Enum);
@@ -355,8 +355,9 @@ var Enum = function (_Array) {
       return obj[key];
     });
 
-    var _this = possibleConstructorReturn(this, (_ref = Enum.__proto__ || Object.getPrototypeOf(Enum)).call.apply(_ref, [this].concat(toConsumableArray(values))));
+    var _this = possibleConstructorReturn(this, (Enum.__proto__ || Object.getPrototypeOf(Enum)).call(this));
 
+    (_babelHelpers$get = get(Enum.prototype.__proto__ || Object.getPrototypeOf(Enum.prototype), 'push', _this)).call.apply(_babelHelpers$get, [_this].concat(toConsumableArray(values)));
     Object.defineProperty(_this, 'keys', { value: keys });
     keys.forEach(function (key) {
       return Object.defineProperty(_this, key, { value: obj[key] });

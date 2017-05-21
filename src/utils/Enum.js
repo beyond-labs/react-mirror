@@ -2,7 +2,8 @@ class Enum extends Array {
   constructor(obj = {}) {
     const keys = Object.keys(obj)
     const values = keys.map(key => obj[key])
-    super(...values)
+    super()
+    super.push(...values)
     Object.defineProperty(this, 'keys', {value: keys})
     keys.forEach(key => Object.defineProperty(this, key, {value: obj[key]}))
   }
