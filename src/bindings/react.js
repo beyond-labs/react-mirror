@@ -83,13 +83,17 @@ function createMirrorDecorator(config = {}) {
         })
         Object.assign(this, {id, mirror, dispatch})
 
+        const $propsState = streams.$state
+          ? most.combine(
+              instantiseMapToProps(mapToProps).bind(this),
+              streams.$state,
+              streams.$props
+            )
+          : streams.$props.map(instantiseMapToProps(mapToProps).bind(this, undefined))
+
         filterUnchanged(
           pure.propsStateEqual.bind(this),
-          most.combine(
-            instantiseMapToProps(mapToProps).bind(this),
-            streams.$state,
-            streams.$props
-          )
+          $propsState
         ).observe(propsState => {
           this.setState(({updateCount}) => ({updateCount: updateCount + 1, propsState}))
         })

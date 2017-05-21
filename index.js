@@ -897,7 +897,9 @@ function createMirrorDecorator() {
 
         Object.assign(_this, { id: id, mirror: mirror, dispatch: dispatch });
 
-        filterUnchanged(pure.propsStateEqual.bind(_this), most.combine(instantiseMapToProps(mapToProps).bind(_this), streams.$state, streams.$props)).observe(function (propsState) {
+        var $propsState = streams.$state ? most.combine(instantiseMapToProps(mapToProps).bind(_this), streams.$state, streams.$props) : streams.$props.map(instantiseMapToProps(mapToProps).bind(_this, undefined));
+
+        filterUnchanged(pure.propsStateEqual.bind(_this), $propsState).observe(function (propsState) {
           _this.setState(function (_ref) {
             var updateCount = _ref.updateCount;
             return { updateCount: updateCount + 1, propsState: propsState };
