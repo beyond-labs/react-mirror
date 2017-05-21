@@ -79,6 +79,7 @@ const createMirrorBackend = () => {
                 )
               })
               .switchLatest()
+              .until($storeDeleted)
           }
         })
       })
@@ -193,12 +194,11 @@ const createMirrorBackend = () => {
     },
     removeStore(storeId) {
       const store = storeMap[storeId]
-      invariant(store, 'Cannot remove a store ("%s") that does not exist', storeId)
+      if (!store) return
       invariant(store !== root, 'Cannot remove root store')
 
       const traverse = store => {
-        store.children.forEach(traverse)
-        // TODO: test dispatch in response to TEARDOWN
+        Object.values(store.children).forEach(traverse)
         store.dispatch('TEARDOWN')
         delete storeMap[store.id]
         onStoreUpdated({store, op: 'remove'})

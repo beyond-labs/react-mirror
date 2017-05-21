@@ -2,16 +2,16 @@ import * as most from 'most'
 
 const eventSource = () => {
   let buffer = []
-  let resolve
+  let next
   let push = event => {
-    if (resolve) {
-      resolve(event)
-      resolve = null
+    if (next) {
+      next(event)
+      next = null
     } else {
       buffer.push(event)
     }
   }
-  const setResolve = r => (resolve = r)
+  const setResolve = (resolve, reject) => (next = resolve)
   function* eventGenerator() {
     while (true) {
       if (buffer.length) yield Promise.resolve(buffer.shift())
@@ -20,7 +20,6 @@ const eventSource = () => {
   }
   return {
     push,
-    end: () => eventGenerator.return(),
     $stream: most.generate(eventGenerator)
   }
 }

@@ -57,15 +57,8 @@ function createMirrorDecorator(config = {}) {
         this.props = props
         this.state = {updateCount: 0, props: undefined}
 
-        let {
-          push: onReceivedProps,
-          end: endReceivedPropsEventSource,
-          $stream: $props
-        } = createEventSource()
-        Object.assign(this, {onReceivedProps, endReceivedPropsEventSource})
-        const $stateEnd = most.fromPromise(
-          new Promise(resolve => (this.onStateEnd = resolve))
-        )
+        let {push: onReceivedProps, $stream: $props} = createEventSource()
+        Object.assign(this, {onReceivedProps})
 
         const {id, mirror, dispatch, streams} = MirrorBackend.addStore(context.id, {
           requesting: ['$state', '$props'],
@@ -79,9 +72,9 @@ function createMirrorDecorator(config = {}) {
               [_name].concat(name.filter(name => typeof name === 'string').join(', '))
             )
             if (!state || !$state) return {$props}
-            $state = filterUnchanged(pure.stateEqual.bind(this), $state)
-              .filter(state => state !== undefined)
-              .until($stateEnd)
+            $state = filterUnchanged(pure.stateEqual.bind(this), $state).filter(
+              state => state !== undefined
+            )
             return {$state, $props}
           },
           metadata: {
@@ -114,8 +107,6 @@ function createMirrorDecorator(config = {}) {
         return nextState.updateCount > this.state.updateCount
       }
       componentWillUnmount() {
-        this.endReceivedPropsEventSource()
-        this.onStateEnd()
         MirrorBackend.removeStore(this.id)
       }
       render() {

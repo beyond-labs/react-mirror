@@ -466,17 +466,17 @@ var eventSource$1 = function eventSource() {
   var _marked = [eventGenerator].map(regeneratorRuntime.mark);
 
   var buffer = [];
-  var resolve = void 0;
+  var next = void 0;
   var push = function push(event) {
-    if (resolve) {
-      resolve(event);
-      resolve = null;
+    if (next) {
+      next(event);
+      next = null;
     } else {
       buffer.push(event);
     }
   };
-  var setResolve = function setResolve(r) {
-    return resolve = r;
+  var setResolve = function setResolve(resolve, reject) {
+    return next = resolve;
   };
   function eventGenerator() {
     return regeneratorRuntime.wrap(function eventGenerator$(_context) {
@@ -514,9 +514,6 @@ var eventSource$1 = function eventSource() {
   }
   return {
     push: push,
-    end: function end() {
-      return eventGenerator.return();
-    },
     $stream: most.generate(eventGenerator)
   };
 };
@@ -625,7 +622,7 @@ var createMirrorBackend = function createMirrorBackend() {
               }).filter(function (s) {
                 return s;
               }), stores);
-            }).switchLatest();
+            }).switchLatest().until($storeDeleted);
           }
         });
       });
@@ -732,12 +729,11 @@ var createMirrorBackend = function createMirrorBackend() {
     },
     removeStore: function removeStore(storeId) {
       var store = storeMap[storeId];
-      invariant(store, 'Cannot remove a store ("%s") that does not exist', storeId);
+      if (!store) return;
       invariant(store !== root, 'Cannot remove root store');
 
       var traverse = function traverse(store) {
-        store.children.forEach(traverse);
-        // TODO: test dispatch in response to TEARDOWN
+        Object.values(store.children).forEach(traverse);
         store.dispatch('TEARDOWN');
         delete storeMap[store.id];
         onStoreUpdated({ store: store, op: 'remove' });
@@ -870,13 +866,9 @@ function createMirrorDecorator() {
 
         var _createEventSource = eventSource$1(),
             onReceivedProps = _createEventSource.push,
-            endReceivedPropsEventSource = _createEventSource.end,
             $props = _createEventSource.$stream;
 
-        Object.assign(_this, { onReceivedProps: onReceivedProps, endReceivedPropsEventSource: endReceivedPropsEventSource });
-        var $stateEnd = most.fromPromise(new Promise(function (resolve) {
-          return _this.onStateEnd = resolve;
-        }));
+        Object.assign(_this, { onReceivedProps: onReceivedProps });
 
         var _MirrorBackend$addSto = MirrorBackend.addStore(context.id, {
           requesting: ['$state', '$props'],
@@ -890,7 +882,7 @@ function createMirrorDecorator() {
             if (!state || !$state) return { $props: $props };
             $state = filterUnchanged(pure.stateEqual.bind(_this), $state).filter(function (state) {
               return state !== undefined;
-            }).until($stateEnd);
+            });
             return { $state: $state, $props: $props };
           },
           metadata: {
@@ -936,8 +928,6 @@ function createMirrorDecorator() {
       }, {
         key: 'componentWillUnmount',
         value: function componentWillUnmount() {
-          this.endReceivedPropsEventSource();
-          this.onStateEnd();
           MirrorBackend.removeStore(this.id);
         }
       }, {
