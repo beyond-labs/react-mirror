@@ -1,0 +1,19 @@
+{
+  "name": "examples",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "classnames": "^2.2.5",
+    "react": "^15.5.4",
+    "react-dom": "^15.5.4"
+  },
+  "devDependencies": {
+    "@storybook/react": "3.0.0-alpha.1",
+    "react-scripts": "1.0.2"
+  },
+  "scripts": {
+    "start": "start-storybook -p 9009 -s public",
+    "build": "build-storybook -s public",
+    "test": "react-scripts test --env=jsdom"
+  }
+}

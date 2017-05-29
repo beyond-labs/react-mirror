@@ -7,17 +7,11 @@ module.exports = {
   },
   rules: {
     indent: ['warn', 2],
-    'prefer-const': [
-      'warn',
-      {
-        destructuring: 'all'
-      }
-    ],
-    'no-var': 'warn',
-    semi: ['warn', 'always'],
+    'max-len': ['warn', 90],
+    semi: ['warn', 'never'],
+    'no-unexpected-multiline': 'warn',
     quotes: ['warn', 'single'],
-    'no-else-return': 'warn',
-    complexity: ['warn', 5],
-    'max-depth': ['warn', 2]
+    'comma-dangle': ['warn', 'never'],
+    'object-curly-spacing': ['warn', 'never']
   }
-};
+}

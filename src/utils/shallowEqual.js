@@ -1,23 +1,22 @@
-const hasOwn = Object.prototype.hasOwnProperty;
+const hasOwn = Object.prototype.hasOwnProperty
 
-export const shallowEqual = (a, b) => {
-  if (a === b) return true;
+const shallowEqual = (a, b) => {
+  if (a === b) return true
+  if (typeof a !== 'object' || typeof b !== 'object' || !a !== !b) return false
 
-  let countA = 0;
-  let countB = 0;
+  let countA = 0
+  let countB = 0
 
-  /* eslint-disable prefer-const */
   for (let key in a) {
-    if (hasOwn.call(a, key) && a[key] !== b[key]) return false;
-    countA++;
+    if (hasOwn.call(a, key) && a[key] !== b[key]) return false
+    countA++
   }
 
   for (let key in b) {
-    if (hasOwn.call(b, key)) countB++;
+    if (hasOwn.call(b, key)) countB++
   }
-  /* eslint-enable prefer-const */
 
-  return countA === countB;
-};
+  return countA === countB
+}
 
-export default shallowEqual;
+export default shallowEqual
