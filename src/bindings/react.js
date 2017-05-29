@@ -7,6 +7,7 @@ import shallowEqual from '../utils/shallowEqual'
 import createEventSource from '../utils/streams/eventSource'
 import filterUnchanged from '../utils/streams/filterUnchanged'
 
+// TODO: passing name as prop is equivalent to `withName`
 const instantiseMapToProps = mapToProps => {
   let CALLED_ONCE
   const instantisedMapToProps = (state, props) => {
@@ -45,6 +46,7 @@ function createMirrorDecorator(config = {}) {
       }
     }
     const _name = WrappedComponent.displayName || WrappedComponent.name || 'Component'
+    const stateless = !WrappedComponent.prototype.render
     invariant(
       name.every(name => typeof name === 'string'),
       '`name` should be a string or array of strings (at "%s")',
@@ -99,6 +101,10 @@ function createMirrorDecorator(config = {}) {
         })
       }
       getWrappedInstance() {
+        invariant(
+          !stateless,
+          "Stateless components (eg, `() => {}`) don't have refs, and can't be unwrapped."
+        )
         return this.wrappedInstance
       }
       getChildContext() {
@@ -118,11 +124,13 @@ function createMirrorDecorator(config = {}) {
           return null
         }
 
-        return React.createElement(WrappedComponent, {
+        const props = {
           ...this.state.propsState,
-          ref: ref => (this.wrappedInstance = ref),
           dispatch: this.dispatch
-        })
+        }
+        if (!stateless) props.ref = ref => (this.wrappedInstance = ref)
+
+        return React.createElement(WrappedComponent, props)
       }
     }
 
