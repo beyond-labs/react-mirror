@@ -243,7 +243,7 @@ var runQuery = function runQuery(tree, originIds, query) {
     return result;
   }();
 
-  return runQuery(tree, result, query.slice(1));
+  return runQuery(tree, result, query);
 };
 
 var createCursorBackend$1 = function createCursorBackend() {
