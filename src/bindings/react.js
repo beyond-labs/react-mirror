@@ -7,7 +7,6 @@ import shallowEqual from '../utils/shallowEqual'
 import createEventSource from '../utils/streams/eventSource'
 import filterUnchanged from '../utils/streams/filterUnchanged'
 
-// TODO: passing name as prop is equivalent to `withName`
 const instantiseMapToProps = mapToProps => {
   let CALLED_ONCE
   const instantisedMapToProps = (state, props) => {
@@ -94,11 +93,11 @@ function createMirrorDecorator(config = {}) {
 
         const $propsState = streams.$state
           ? most.combine(
-              instantiseMapToProps(mapToProps).bind(this),
+              instantiseMapToProps(mapToProps.bind(this)),
               streams.$state,
               streams.$props
             )
-          : streams.$props.map(instantiseMapToProps(mapToProps).bind(this, undefined))
+          : streams.$props.map(instantiseMapToProps(mapToProps.bind(this, undefined)))
 
         filterUnchanged(
           pure.propsStateEqual.bind(this),
