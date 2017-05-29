@@ -369,6 +369,11 @@ var Enum = function (_Array) {
 
     (_babelHelpers$get = get(Enum.prototype.__proto__ || Object.getPrototypeOf(Enum.prototype), 'push', _this)).call.apply(_babelHelpers$get, [_this].concat(toConsumableArray(values)));
     Object.defineProperty(_this, 'keys', { value: keys });
+    Object.defineProperty(_this, 'indexes', {
+      value: new Array(values.length).fill().map(function (v, i) {
+        return i;
+      })
+    });
     keys.forEach(function (key) {
       return Object.defineProperty(_this, key, { value: obj[key] });
     });

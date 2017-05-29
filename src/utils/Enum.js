@@ -5,6 +5,9 @@ class Enum extends Array {
     super()
     super.push(...values)
     Object.defineProperty(this, 'keys', {value: keys})
+    Object.defineProperty(this, 'indexes', {
+      value: new Array(values.length).fill().map((v, i) => i)
+    })
     keys.forEach(key => Object.defineProperty(this, key, {value: obj[key]}))
   }
   map(f) {
