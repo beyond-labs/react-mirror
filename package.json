@@ -1,6 +1,6 @@
 {
   "name": "react-mirror",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Fractal state management for React",
   "keywords": [
     "react",

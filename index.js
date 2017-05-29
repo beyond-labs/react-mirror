@@ -344,12 +344,12 @@ var generateStoreId = function generateStoreId() {
       break;
     }
   }
-  return counter.map(function (char) {
+  return '$' + counter.map(function (char) {
     return ALPHABET[char];
   }).join('');
 };
 
-var couldBeStoreId = RegExp.prototype.test.bind(/^[A-Z]{2,12}$/);
+var couldBeStoreId = RegExp.prototype.test.bind(/^\$[A-Z]{2,12}$/);
 
 var Enum = function (_Array) {
   inherits(Enum, _Array);
@@ -595,7 +595,7 @@ var createMirrorBackend = function createMirrorBackend() {
 
     Object.assign(store, { identifiers: identifiers, metadata: metadata });
 
-    invariant(!identifiers.some(couldBeStoreId), 'Cannot use all-uppercase identifiers ("%s") because they could conflict with internally-used IDs', identifiers.find(couldBeStoreId));
+    invariant(!identifiers.some(couldBeStoreId), 'Cannot precede all-uppercase identifiers with "$" ("%s") because they could conflict with internally-used IDs', identifiers.find(couldBeStoreId));
 
     var $storeDeleted = $queryResults.filter(function () {
       return !storeMap[store.id];
