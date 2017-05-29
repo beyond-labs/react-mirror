@@ -1,5 +1,3 @@
-TODO: function-cache & validate-name
-
 React Mirror
 ============
 
