@@ -1,5 +1,5 @@
 {
-  "name": "examples",
+  "name": "react-mirror-examples",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -12,8 +12,8 @@
     "react-scripts": "1.0.2"
   },
   "scripts": {
-    "start": "start-storybook -p 9009 -s public",
-    "build": "build-storybook -s public",
+    "start": "start-storybook -p 9000",
+    "build": "build-storybook",
     "test": "react-scripts test --env=jsdom"
   }
 }
