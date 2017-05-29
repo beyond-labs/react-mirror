@@ -119,7 +119,17 @@ var inherits = function (subClass, superClass) {
 
 
 
+var objectWithoutProperties = function (obj, keys) {
+  var target = {};
 
+  for (var i in obj) {
+    if (keys.indexOf(i) >= 0) continue;
+    if (!Object.prototype.hasOwnProperty.call(obj, i)) continue;
+    target[i] = obj[i];
+  }
+
+  return target;
+};
 
 var possibleConstructorReturn = function (self, call) {
   if (!self) {
@@ -828,7 +838,9 @@ function createMirrorDecorator() {
 
     if (!(name instanceof Array)) name = [name];
     if (typeof mapToProps !== 'function') {
-      mapToProps = function mapToProps(state, props) {
+      mapToProps = function mapToProps(state, _ref) {
+        var withName = _ref.withName,
+            props = objectWithoutProperties(_ref, ['withName']);
         return _extends({}, props, state);
       };
     }
@@ -850,9 +862,19 @@ function createMirrorDecorator() {
       };
     }
     var _name = WrappedComponent.displayName || WrappedComponent.name || 'Component';
+    var stateless = !WrappedComponent.prototype.render;
     invariant(name.every(function (name) {
       return typeof name === 'string';
     }), '`name` should be a string or array of strings (at "%s")', _name);
+
+    var getPropNames = function getPropNames() {
+      var name = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+
+      if (!(name instanceof Array)) name = [name];
+      return name.filter(function (name) {
+        return typeof name === 'string';
+      }).sort();
+    };
 
     var Mirror = function (_React$Component) {
       inherits(Mirror, _React$Component);
@@ -873,7 +895,7 @@ function createMirrorDecorator() {
 
         var _MirrorBackend$addSto = MirrorBackend.addStore(context.id, {
           requesting: ['$state', '$props'],
-          identifiers: [].concat(toConsumableArray(name), [Mirror.__COMPONENT_IDENTIFIER__]),
+          identifiers: [].concat(toConsumableArray(name), toConsumableArray(getPropNames(_this.props.withName)), [Mirror.__COMPONENT_IDENTIFIER__]),
           streams: function streams(mirror, dispatch) {
             $props = filterUnchanged(pure.propsEqual.bind(_this), $props.startWith(props));
             var $state = typeof state === 'function' && state.call(_this, mirror, dispatch);
@@ -897,11 +919,11 @@ function createMirrorDecorator() {
 
         Object.assign(_this, { id: id, mirror: mirror, dispatch: dispatch });
 
-        var $propsState = streams.$state ? most.combine(instantiseMapToProps(mapToProps).bind(_this), streams.$state, streams.$props) : streams.$props.map(instantiseMapToProps(mapToProps).bind(_this, undefined));
+        var $propsState = streams.$state ? most.combine(instantiseMapToProps(mapToProps.bind(_this)), streams.$state, streams.$props) : streams.$props.map(instantiseMapToProps(mapToProps.bind(_this, undefined)));
 
         filterUnchanged(pure.propsStateEqual.bind(_this), $propsState).observe(function (propsState) {
-          _this.setState(function (_ref) {
-            var updateCount = _ref.updateCount;
+          _this.setState(function (_ref2) {
+            var updateCount = _ref2.updateCount;
             return { updateCount: updateCount + 1, propsState: propsState };
           });
         });
@@ -911,6 +933,7 @@ function createMirrorDecorator() {
       createClass(Mirror, [{
         key: 'getWrappedInstance',
         value: function getWrappedInstance() {
+          invariant(!stateless, "Stateless components (eg, `() => {}`) don't have refs, and therefore can't be unwrapped.");
           return this.wrappedInstance;
         }
       }, {
@@ -921,6 +944,15 @@ function createMirrorDecorator() {
       }, {
         key: 'componentWillReceiveProps',
         value: function componentWillReceiveProps(nextProps) {
+          var nextName = getPropNames(nextProps.withName);
+          var currentName = getPropNames(this.props.withName);
+          if (JSON.stringify(nextName) !== JSON.stringify(currentName)) {
+            MirrorBackend.updateStore(this.id, {
+              requesting: ['$state', '$props'],
+              identifiers: [].concat(toConsumableArray(name), toConsumableArray(nextName), [Mirror.__COMPONENT_IDENTIFIER__]),
+              metadata: { instance: this }
+            });
+          }
           this.onReceivedProps(nextProps);
         }
       }, {
@@ -942,12 +974,14 @@ function createMirrorDecorator() {
             return null;
           }
 
-          return React.createElement(WrappedComponent, _extends({}, this.state.propsState, {
-            ref: function ref(_ref2) {
-              return _this2.wrappedInstance = _ref2;
-            },
+          var props = _extends({}, this.state.propsState, {
             dispatch: this.dispatch
-          }));
+          });
+          if (!stateless) props.ref = function (ref) {
+            return _this2.wrappedInstance = ref;
+          };
+
+          return React.createElement(WrappedComponent, props);
         }
       }]);
       return Mirror;

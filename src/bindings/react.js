@@ -26,7 +26,7 @@ function createMirrorDecorator(config = {}) {
     let {name = [], state, mapToProps, pure = true} = config
     if (!(name instanceof Array)) name = [name]
     if (typeof mapToProps !== 'function') {
-      mapToProps = (state, props) => ({...props, ...state})
+      mapToProps = (state, {withName, ...props}) => ({...props, ...state})
     }
     if (!pure) pure = {propsEqual() {}, stateEqual() {}, propsStateEqual() {}}
     if (pure === true) pure = {}
@@ -52,8 +52,10 @@ function createMirrorDecorator(config = {}) {
       _name
     )
 
-    const getPropNames = (name = []) =>
-      name.filter(name => typeof name === 'string').sort()
+    const getPropNames = (name = []) => {
+      if (!(name instanceof Array)) name = [name]
+      return name.filter(name => typeof name === 'string').sort()
+    }
 
     class Mirror extends React.Component {
       constructor(props, context) {
@@ -68,7 +70,7 @@ function createMirrorDecorator(config = {}) {
           requesting: ['$state', '$props'],
           identifiers: [
             ...name,
-            ...getPropNames(this.props.name),
+            ...getPropNames(this.props.withName),
             Mirror.__COMPONENT_IDENTIFIER__
           ],
           streams: (mirror, dispatch) => {
@@ -117,8 +119,9 @@ function createMirrorDecorator(config = {}) {
         return {id: this.id}
       }
       componentWillReceiveProps(nextProps) {
-        const nextName = getPropNames(nextProps.name)
-        if (JSON.stringify(nextName) !== JSON.stringify(getPropNames(this.props.name))) {
+        const nextName = getPropNames(nextProps.withName)
+        const currentName = getPropNames(this.props.withName)
+        if (JSON.stringify(nextName) !== JSON.stringify(currentName)) {
           MirrorBackend.updateStore(this.id, {
             requesting: ['$state', '$props'],
             identifiers: [...name, ...nextName, Mirror.__COMPONENT_IDENTIFIER__],

@@ -1,3 +1,5 @@
+TODO: function-cache & validate-name
+
 React Mirror
 ============
 
@@ -259,7 +261,7 @@ The `Mirror` configuration accepts `name`, `state()`, `mapToProps()` & `pure`. E
 
 Mirror uses `name` inside filters. `name` is a string, or array of strings.
 
-The static `withName` method lets you add additional names to a store. `withName` is useful for distinguishing particular instances of a component.
+You can add additional names to a store by passing `withName` as a prop, or calling the static `withName` method. `withName` is useful for distinguishing particular instances of a component.
 
 ```js
 const Form = Mirror({
@@ -269,8 +271,6 @@ const Form = Mirror({
 
 const CreateProjectForm = Form.withName('form/create-project')
 ```
-
-Although `withName` creates a new component itself, cursor behaviour isn't affected when passing a component as the filter.
 
 ##### `state(mirror, dispatch)`
 

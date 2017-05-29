@@ -1,7 +1,7 @@
 {
   "name": "react-mirror",
-  "version": "0.3.4",
-  "description": "Fractal state management for react",
+  "version": "1.0.0",
+  "description": "Fractal state management for React",
   "keywords": [
     "react",
     "mirror",
@@ -11,15 +11,15 @@
     "flux",
     "view controller"
   ],
-  "homepage": "https://github.com/ashtonwar/react-mirror#readme",
+  "homepage": "https://github.com/beyond-labs/react-mirror#readme",
   "bugs": {
-    "url": "https://github.com/ashtonwar/react-mirror/issues",
-    "email": "me@ashtonwar.com"
+    "url": "https://github.com/beyond-labs/react-mirror/issues",
+    "email": "me@ashtonsix.com"
   },
   "license": "ISC",
-  "author": "Ashton <me@ashtonwar.com> (http://www.ashtonwar.com/)",
+  "author": "Ashton <me@ashtonsix.com> (http://www.ashtonsix.com/)",
   "main": "index.js",
-  "repository": "ashtonwar/react-mirror",
+  "repository": "beyond-labs/react-mirror",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rollup -c"
@@ -34,9 +34,9 @@
   "devDependencies": {
     "babel-eslint": "7.1.1",
     "babel-plugin-external-helpers": "6.22.0",
-    "babel-plugin-transform-object-rest-spread": "^6.23.0",
-    "babel-plugin-transform-regenerator": "^6.24.1",
-    "babel-preset-env": "^1.4.0",
+    "babel-plugin-transform-object-rest-spread": "6.23.0",
+    "babel-plugin-transform-regenerator": "6.24.1",
+    "babel-preset-env": "1.4.0",
     "eslint": "3.16.1",
     "eslint-config-react-app": "0.6.2",
     "eslint-plugin-flowtype": "2.21.0",
