@@ -13,7 +13,7 @@ const combineNested = streamMap => {
     const result = {}
     enumCollection.forEach(_enum_ => {
       _enum_.forEach((value, i, key) => {
-        if (!result[key]) result[key] = result[key]
+        if (!result[key]) result[key] = {}
         result[key][keys[i]] = value
       })
     })

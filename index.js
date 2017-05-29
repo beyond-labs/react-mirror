@@ -1187,7 +1187,7 @@ var combineNested = function combineNested(streamMap) {
     var result = {};
     enumCollection.forEach(function (_enum_) {
       _enum_.forEach(function (value, i, key) {
-        if (!result[key]) result[key] = result[key];
+        if (!result[key]) result[key] = {};
         result[key][keys[i]] = value;
       });
     });
