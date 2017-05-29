@@ -1097,6 +1097,9 @@ var combine$1 = function combine$$1() {
   }
 
   if (streams[0] instanceof Array) streams = streams[0];
+  invariant(streams.every(function ($stream) {
+    return $stream && $stream.subscribe;
+  }), '`combine` only accepts streams');
   return most.combineArray(function () {
     for (var _len2 = arguments.length, enumCollection = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
       enumCollection[_key2] = arguments[_key2];
@@ -1156,6 +1159,7 @@ var combineEventsWithNothing = function combineEventsWithNothing(eventStream) {
 var combineEventsWith = function combineEventsWith(eventStream, otherStream) {
   var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : { before: true, after: true };
 
+  invariant(eventStream && otherStream && eventStream.subscribe && otherStream.subscribe, '`combineEventsWith` only accepts streams');
   if (options.before && options.after) {
     return combineEventsWithDefault(eventStream, otherStream);
   } else if (options.before) {
@@ -1172,6 +1176,9 @@ var combineNested = function combineNested(streamMap) {
   var streams = keys.map(function (key) {
     return streamMap[key];
   });
+  invariant(streams.every(function ($stream) {
+    return $stream && $stream.subscribe;
+  }), '`combine` only accepts streams');
   return most.combineArray(function () {
     for (var _len = arguments.length, enumCollection = Array(_len), _key = 0; _key < _len; _key++) {
       enumCollection[_key] = arguments[_key];
@@ -1194,6 +1201,9 @@ var combineSimple = function combineSimple() {
   }
 
   if (streams[0] instanceof Array) streams = streams[0];
+  invariant(streams.every(function ($stream) {
+    return $stream && $stream.subscribe;
+  }), '`combineSimple` only accepts streams');
   return most.combineArray(function () {
     for (var _len2 = arguments.length, values = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
       values[_key2] = arguments[_key2];

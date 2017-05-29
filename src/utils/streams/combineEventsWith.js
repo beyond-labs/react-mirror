@@ -1,4 +1,5 @@
 import * as most from 'most'
+import invariant from 'invariant'
 
 const SKIP_TOKEN = '__MIRROR_SKIP_TOKEN__'
 
@@ -38,6 +39,10 @@ const combineEventsWith = (
   otherStream,
   options = {before: true, after: true}
 ) => {
+  invariant(
+    eventStream && otherStream && eventStream.subscribe && otherStream.subscribe,
+    '`combineEventsWith` only accepts streams'
+  )
   if (options.before && options.after) {
     return combineEventsWithDefault(eventStream, otherStream)
   } else if (options.before) {

@@ -1,9 +1,14 @@
 import * as most from 'most'
+import invariant from 'invariant'
 import Enum from '../Enum'
 
 const combineNested = streamMap => {
   const keys = Object.keys(streamMap)
   const streams = keys.map(key => streamMap[key])
+  invariant(
+    streams.every($stream => $stream && $stream.subscribe),
+    '`combine` only accepts streams'
+  )
   return most.combineArray((...enumCollection) => {
     const result = {}
     enumCollection.forEach(_enum_ => {
