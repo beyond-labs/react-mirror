@@ -194,7 +194,7 @@ By comparison, `$stores` emits a value every time a store is added, removed or u
 
 #### **Combining Streams**
 
-Mirror exports four helpers (`combine`, `combineSimple`, `combineNested` & `combineActionsWith`) for combining streams together. I've used plain objects in these examples for clarity; only streams work in practice, each value in the resulting stream matches the following patterns.
+Mirror exports four helpers (`combine`, `combineSimple`, `combineNested` & `combineEventsWith`) for combining streams together. I've used plain objects in these examples for clarity; only streams work in practice, each value in the resulting stream matches the following patterns.
 
 ##### `combine`
 
@@ -224,32 +224,32 @@ combineNested({
 
 ##### `combineSimple`
 
-`combineSimple` joins each value into an array. Use `combineSimple` to join different kinds of streams together, like a cursor selection & state stream.
+`combineSimple` joins each value into an array. Use `combineSimple` to join different kinds of streams together, like an action & state stream.
 
 ```js
 combineSimple(
-  'a',
+  {type: 'ACTION_TYPE'},
   Enum({a: stateA, b: stateB})
 )
 
-// ['a', Enum({a: stateA, b: stateB})]
+// [{type: 'ACTION_TYPE'}, Enum({a: stateA, b: stateB})]
 ```
 
-##### `combineActionsWith`
+##### `combineEventsWith`
 
-`combineActionsWith` joins a stream of actions with the value before & after that action from another stream.
+`combineEventsWith` joins a stream of events with the value before & after that event from another stream.
 
 ```js
-combineActionsWith(
+combineEventsWith(
   {type: 'ACTION_TYPE', payload, store},
   Enum({a: stateA}),
   {before: true, after: true}
 )
 
-// {action, before: stateBeforeAction, after: stateAfterAction}
+// {event, before: stateBeforeEvent, after: stateAfterEvent}
 ```
 
-The `options` argument defaults to `{before: true, after: true}`. Pass `{before: true, after: false}` if you need access to the last action before the other stream emits an `after` (you probably don't).
+The `options` argument defaults to `{before: true, after: true}`.
 
 ### Store Configuration
 

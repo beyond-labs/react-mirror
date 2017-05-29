@@ -1109,57 +1109,57 @@ var combine$1 = function combine$$1() {
 
 var SKIP_TOKEN$2 = '__MIRROR_SKIP_TOKEN__';
 
-var combineActionsWithDefault = function combineActionsWithDefault(actionStream, otherStream) {
-  return most.combine(function (action, other) {
-    return { action: action, other: other };
+var combineEventsWithDefault = function combineEventsWithDefault(eventStream, otherStream) {
+  return most.combine(function (event, other) {
+    return { event: event, other: other };
   }).loop(function (_ref, _ref2) {
     var prevAction = _ref.prevAction,
         before = _ref.before;
-    var action = _ref2.action,
+    var event = _ref2.event,
         after = _ref2.other;
     return {
       seed: {
-        prevAction: action,
-        before: prevAction === action ? SKIP_TOKEN$2 : after
+        prevAction: event,
+        before: prevAction === event ? SKIP_TOKEN$2 : after
       },
-      value: before === SKIP_TOKEN$2 ? { before: before, action: action, after: after } : SKIP_TOKEN$2
+      value: before === SKIP_TOKEN$2 ? { before: before, event: event, after: after } : SKIP_TOKEN$2
     };
   }, {}).filter(function (value) {
     return value !== SKIP_TOKEN$2;
   });
 };
 
-var combineActionsWithBefore = function combineActionsWithBefore(actionStream, otherStream) {
-  return actionStream.sample(function (action, other) {
-    return { before: other, action: action };
+var combineEventsWithBefore = function combineEventsWithBefore(eventStream, otherStream) {
+  return eventStream.sample(function (event, other) {
+    return { before: other, event: event };
   }, otherStream);
 };
 
-var combineActionsWithAfter = function combineActionsWithAfter(actionStream, otherStream) {
-  return combineActionsWithDefault(actionStream, otherStream).map(function (value) {
+var combineEventsWithAfter = function combineEventsWithAfter(eventStream, otherStream) {
+  return combineEventsWithDefault(eventStream, otherStream).map(function (value) {
     delete value.before;
     return value;
   });
 };
 
-var combineActionsWithNothing = function combineActionsWithNothing(actionStream) {
-  return actionStream.map(function (action) {
-    return { action: action };
+var combineEventsWithNothing = function combineEventsWithNothing(eventStream) {
+  return eventStream.map(function (event) {
+    return { event: event };
   });
 };
 
-var combineActionsWith = function combineActionsWith(actionStream, otherStream) {
+var combineEventsWith = function combineEventsWith(eventStream, otherStream) {
   var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : { before: true, after: true };
 
   if (options.before && options.after) {
-    return combineActionsWithDefault(actionStream, otherStream);
+    return combineEventsWithDefault(eventStream, otherStream);
   } else if (options.before) {
-    return combineActionsWithBefore(actionStream, otherStream);
+    return combineEventsWithBefore(eventStream, otherStream);
   } else if (options.after) {
-    return combineActionsWithAfter(actionStream, otherStream);
+    return combineEventsWithAfter(eventStream, otherStream);
   }
 
-  return combineActionsWithNothing(actionStream);
+  return combineEventsWithNothing(eventStream);
 };
 
 var combineNested = function combineNested(streamMap) {
@@ -1215,7 +1215,7 @@ exports.handleActions = handleActions;
 exports.Enum = Enum;
 exports.shallowEqual = shallowEqual;
 exports.combine = combine$1;
-exports.combineActionsWith = combineActionsWith;
+exports.combineEventsWith = combineEventsWith;
 exports.combineNested = combineNested;
 exports.combineSimple = combineSimple;
 exports.filterUnchanged = filterUnchanged;
