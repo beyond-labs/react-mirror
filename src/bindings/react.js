@@ -53,6 +53,9 @@ function createMirrorDecorator(config = {}) {
       _name
     )
 
+    const getPropNames = (name = []) =>
+      name.filter(name => typeof name === 'string').sort()
+
     class Mirror extends React.Component {
       constructor(props, context) {
         super()
@@ -64,7 +67,11 @@ function createMirrorDecorator(config = {}) {
 
         const {id, mirror, dispatch, streams} = MirrorBackend.addStore(context.id, {
           requesting: ['$state', '$props'],
-          identifiers: [...name, Mirror.__COMPONENT_IDENTIFIER__],
+          identifiers: [
+            ...name,
+            ...getPropNames(this.props.name),
+            Mirror.__COMPONENT_IDENTIFIER__
+          ],
           streams: (mirror, dispatch) => {
             $props = filterUnchanged(pure.propsEqual.bind(this), $props.startWith(props))
             let $state = typeof state === 'function' && state.call(this, mirror, dispatch)
@@ -103,7 +110,7 @@ function createMirrorDecorator(config = {}) {
       getWrappedInstance() {
         invariant(
           !stateless,
-          "Stateless components (eg, `() => {}`) don't have refs, and can't be unwrapped."
+          "Stateless components (eg, `() => {}`) don't have refs, and therefore can't be unwrapped."
         )
         return this.wrappedInstance
       }
@@ -111,6 +118,14 @@ function createMirrorDecorator(config = {}) {
         return {id: this.id}
       }
       componentWillReceiveProps(nextProps) {
+        const nextName = getPropNames(nextProps.name)
+        if (JSON.stringify(nextName) !== JSON.stringify(getPropNames(this.props.name))) {
+          MirrorBackend.updateStore(this.id, {
+            requesting: ['$state', '$props'],
+            identifiers: [...name, ...nextName, Mirror.__COMPONENT_IDENTIFIER__],
+            metadata: {instance: this}
+          })
+        }
         this.onReceivedProps(nextProps)
       }
       shouldComponentUpdate(nextProps, nextState) {
