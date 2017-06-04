@@ -272,7 +272,7 @@ const CreateProjectForm = Form.withName('form/create-project')
 
 ##### `state(mirror, dispatch)`
 
-Called when the store mounts, and returns the instance's state stream. Mirror derives props from the latest value in the state stream, and injects those props into the wrapped component. Other stores can read (a filtered version of) the state stream.
+Called when the store mounts, and returns the instance's state stream. Mirror derives props from the latest value in the state stream, and injects those props into the wrapped component. Other stores can read the state stream.
 
 If provided, the wrapped component only renders once the state stream emits it's first value.
 
@@ -377,7 +377,11 @@ Actions might not be dispatched to every store they're intended for consistently
 
 * Avoid dispatching actions to collections as part of an effect
 * Dispatching actions as part of asynchronous user interaction is safe
-* Use container stores if children have reactive dependencies
+* Use contextual stores if children have reactive dependencies
+
+## See Also
+
+* [Mirror Collection](https://github.com/beyond-labs/react-mirror-collection)
 
 ## Thanks
 
