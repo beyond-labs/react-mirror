@@ -4,7 +4,7 @@ const filterWithPreviousBase = (reverse, f, $stream) => {
   return $stream
     .loop((prevValue, value) => {
       let include = f(prevValue, value)
-      if (reverse) include = !reverse
+      if (reverse) include = !include
       if (include) return {seed: value, value}
       return {seed: value, value: SKIP_TOKEN}
     }, undefined)

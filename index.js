@@ -539,7 +539,7 @@ var SKIP_TOKEN$1 = '__MIRROR_SKIP_TOKEN__';
 var filterWithPreviousBase = function filterWithPreviousBase(reverse, f, $stream) {
   return $stream.loop(function (prevValue, value) {
     var include = f(prevValue, value);
-    if (reverse) include = !reverse;
+    if (reverse) include = !include;
     if (include) return { seed: value, value: value };
     return { seed: value, value: SKIP_TOKEN$1 };
   }, undefined).filter(function (value) {
