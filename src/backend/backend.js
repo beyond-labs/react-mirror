@@ -6,7 +6,7 @@ import createCursorAPI from '../utils/createCursorAPI'
 import generateStoreId, {couldBeStoreId} from '../utils/generateStoreId'
 import combineEnum from '../utils/streams/combineEnum'
 import createEventSource from '../utils/streams/eventSource'
-import {filterUnchangedKeyArrays} from '../utils/streams/filterUnchanged'
+import {filterUnchangedKeyArrays} from '../utils/streams/filterWithPrevious'
 
 const createMirrorBackend = () => {
   let root

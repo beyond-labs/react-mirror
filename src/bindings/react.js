@@ -5,7 +5,7 @@ import invariant from 'invariant'
 import MirrorBackend from '../backend'
 import shallowEqual from '../utils/shallowEqual'
 import createEventSource from '../utils/streams/eventSource'
-import filterUnchanged from '../utils/streams/filterUnchanged'
+import {filterUnchanged} from '../utils/streams/filterWithPrevious'
 
 const instantiseMapToProps = mapToProps => {
   let CALLED_ONCE

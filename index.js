@@ -536,15 +536,19 @@ var eventSource$1 = function eventSource() {
 
 var SKIP_TOKEN$1 = '__MIRROR_SKIP_TOKEN__';
 
-var filterUnchanged = function filterUnchanged(equalityCheck, $stream) {
+var filterWithPreviousBase = function filterWithPreviousBase(reverse, f, $stream) {
   return $stream.loop(function (prevValue, value) {
-    var isEqual = equalityCheck(prevValue, value);
-    if (isEqual) return { seed: value, value: SKIP_TOKEN$1 };
-    return { seed: value, value: value };
+    var include = f(prevValue, value);
+    if (reverse) include = !reverse;
+    if (include) return { seed: value, value: value };
+    return { seed: value, value: SKIP_TOKEN$1 };
   }, undefined).filter(function (value) {
     return value !== SKIP_TOKEN$1;
   });
 };
+
+var filterUnchanged = filterWithPreviousBase.bind(null, true);
+var filterWithPrevious = filterWithPreviousBase.bind(null, false);
 
 var keyArrayEqual = function keyArrayEqual(_ref, keyArray) {
   var oldKeyArray = _ref.oldKeyArray,
@@ -1233,6 +1237,6 @@ exports.combine = combine$1;
 exports.combineEventsWith = combineEventsWith;
 exports.combineNested = combineNested;
 exports.combineSimple = combineSimple;
-exports.filterUnchanged = filterUnchanged;
+exports.filterWithPrevious = filterWithPrevious;
 exports['default'] = createMirrorDecorator;
 //# sourceMappingURL=index.js.map
