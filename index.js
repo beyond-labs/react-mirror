@@ -536,20 +536,6 @@ var eventSource$1 = function eventSource() {
 
 var SKIP_TOKEN$1 = '__MIRROR_SKIP_TOKEN__';
 
-var filterWithPreviousBase = function filterWithPreviousBase(reverse, f, $stream) {
-  return $stream.loop(function (prevValue, value) {
-    var include = f(prevValue, value);
-    if (reverse) include = !include;
-    if (include) return { seed: value, value: value };
-    return { seed: value, value: SKIP_TOKEN$1 };
-  }, undefined).filter(function (value) {
-    return value !== SKIP_TOKEN$1;
-  });
-};
-
-var filterUnchanged = filterWithPreviousBase.bind(null, true);
-var filterWithPrevious = filterWithPreviousBase.bind(null, false);
-
 var keyArrayEqual = function keyArrayEqual(_ref, keyArray) {
   var oldKeyArray = _ref.oldKeyArray,
       oldKeySet = _ref.oldKeySet;
@@ -906,13 +892,13 @@ function createMirrorDecorator() {
           requesting: ['$state', '$props'],
           identifiers: [].concat(toConsumableArray(name), toConsumableArray(getPropNames(_this.props.withName)), [Mirror.__COMPONENT_IDENTIFIER__]),
           streams: function streams(mirror, dispatch) {
-            $props = filterUnchanged(pure.propsEqual.bind(_this), $props.startWith(props));
+            $props = $props.startWith(props).skipRepeatsWith(pure.propsEqual.bind(_this));
             var $state = typeof state === 'function' && state.call(_this, mirror, dispatch);
             warning(!state || $state && $state.subscribe, '`state` should return a stream, did you forget a "return" statement? (at "%s")', [_name].concat(name.filter(function (name) {
               return typeof name === 'string';
             }).join(', ')));
             if (!state || !$state || !$state.subscribe) return { $props: $props };
-            $state = filterUnchanged(pure.stateEqual.bind(_this), $state).filter(function (state) {
+            $state = $state.skipRepeatsWith(pure.stateEqual.bind(_this)).filter(function (state) {
               return state !== undefined;
             });
             return { $state: $state, $props: $props };
@@ -930,7 +916,7 @@ function createMirrorDecorator() {
 
         var $propsState = streams.$state ? most.combine(instantiseMapToProps(mapToProps.bind(_this)), streams.$state, streams.$props) : streams.$props.map(instantiseMapToProps(mapToProps.bind(_this, undefined)));
 
-        filterUnchanged(pure.propsStateEqual.bind(_this), $propsState).observe(function (propsState) {
+        $propsState.skipRepeatsWith(pure.propsStateEqual.bind(_this)).observe(function (propsState) {
           _this.setState(function (_ref2) {
             var updateCount = _ref2.updateCount;
             return { updateCount: updateCount + 1, propsState: propsState };
@@ -1237,6 +1223,5 @@ exports.combine = combine$1;
 exports.combineEventsWith = combineEventsWith;
 exports.combineNested = combineNested;
 exports.combineSimple = combineSimple;
-exports.filterWithPrevious = filterWithPrevious;
 exports['default'] = createMirrorDecorator;
 //# sourceMappingURL=index.js.map

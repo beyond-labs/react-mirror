@@ -5,7 +5,6 @@ import invariant from 'invariant'
 import MirrorBackend from '../backend'
 import shallowEqual from '../utils/shallowEqual'
 import createEventSource from '../utils/streams/eventSource'
-import {filterUnchanged} from '../utils/streams/filterWithPrevious'
 
 const instantiseMapToProps = mapToProps => {
   let CALLED_ONCE
@@ -74,7 +73,7 @@ function createMirrorDecorator(config = {}) {
             Mirror.__COMPONENT_IDENTIFIER__
           ],
           streams: (mirror, dispatch) => {
-            $props = filterUnchanged(pure.propsEqual.bind(this), $props.startWith(props))
+            $props = $props.startWith(props).skipRepeatsWith(pure.propsEqual.bind(this))
             let $state = typeof state === 'function' && state.call(this, mirror, dispatch)
             warning(
               !state || ($state && $state.subscribe),
@@ -82,9 +81,9 @@ function createMirrorDecorator(config = {}) {
               [_name].concat(name.filter(name => typeof name === 'string').join(', '))
             )
             if (!state || !$state || !$state.subscribe) return {$props}
-            $state = filterUnchanged(pure.stateEqual.bind(this), $state).filter(
-              state => state !== undefined
-            )
+            $state = $state
+              .skipRepeatsWith(pure.stateEqual.bind(this))
+              .filter(state => state !== undefined)
             return {$state, $props}
           },
           metadata: {
@@ -101,12 +100,11 @@ function createMirrorDecorator(config = {}) {
             )
           : streams.$props.map(instantiseMapToProps(mapToProps.bind(this, undefined)))
 
-        filterUnchanged(
-          pure.propsStateEqual.bind(this),
-          $propsState
-        ).observe(propsState => {
-          this.setState(({updateCount}) => ({updateCount: updateCount + 1, propsState}))
-        })
+        $propsState
+          .skipRepeatsWith(pure.propsStateEqual.bind(this))
+          .observe(propsState => {
+            this.setState(({updateCount}) => ({updateCount: updateCount + 1, propsState}))
+          })
       }
       getWrappedInstance() {
         invariant(
