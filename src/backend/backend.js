@@ -29,7 +29,7 @@ const createMirrorBackend = () => {
 
     invariant(
       !identifiers.some(couldBeStoreId),
-      'Cannot precede all-uppercase identifiers with "$" ("%s") because they could conflict with internally-used IDs',
+      'Cannot precede all-uppercase identifiers with "_" ("%s") because they could conflict with internally-used IDs',
       identifiers.find(couldBeStoreId)
     )
 

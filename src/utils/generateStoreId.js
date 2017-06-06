@@ -19,9 +19,9 @@ const generateStoreId = () => {
       break
     }
   }
-  return '$' + counter.map(char => ALPHABET[char]).join('')
+  return '_' + counter.map(char => ALPHABET[char]).join('')
 }
 
-export const couldBeStoreId = RegExp.prototype.test.bind(/^\$[A-Z]{2,12}$/)
+export const couldBeStoreId = RegExp.prototype.test.bind(/^_[A-Z]{2,12}$/)
 
 export default generateStoreId
