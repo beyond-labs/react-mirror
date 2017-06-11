@@ -786,26 +786,30 @@ var createMirrorBackend = function createMirrorBackend() {
 var MirrorBackend = createMirrorBackend();
 
 var createScheduler = function createScheduler() {
-  var samplers = [];
+  var samplers = {};
+  var buffer = {};
   var BUFFERING = false;
   return {
-    addStream: function addStream(priority, $stream) {
-      if (!samplers[priority]) {
-        samplers[priority] = eventSource$1();
-        samplers[priority].$stream = samplers[priority].$stream.multicast();
-      }
+    addStream: function addStream(priority, id, $stream) {
+      samplers[id] = eventSource$1();
 
       return $stream.tap(function (evt) {
+        buffer[id] = evt;
         if (!BUFFERING) {
           BUFFERING = true;
           setTimeout(function () {
-            BUFFERING = false;
-            samplers.forEach(function (sampler) {
-              return sampler.push(true);
+            Object.keys(buffer).forEach(function (id) {
+              return samplers[id] && samplers[id].push(true);
             });
+            BUFFERING = false;
+            buffer = {};
           });
         }
-      }).sampleWith(samplers[priority].$stream).skipRepeats();
+      }).sampleWith(samplers[id].$stream);
+    },
+    removeStream: function removeStream(id) {
+      delete samplers[id];
+      delete buffer[id];
     }
   };
 };
@@ -944,12 +948,12 @@ function createMirrorDecorator() {
 
         var $propsState = streams.$state ? most.combine(instantiseMapToProps(mapToProps.bind(_this)), streams.$state, streams.$props) : streams.$props.map(instantiseMapToProps(mapToProps.bind(_this, undefined)));
 
-        $propsState.skipRepeatsWith(pure.propsStateEqual.bind(_this)).thru(scheduler.addStream.bind(null, _this.depth)).observe(function (propsState) {
+        $propsState.skipRepeatsWith(pure.propsStateEqual.bind(_this)).thru(scheduler.addStream.bind(null, _this.depth, id)).observe(function (propsState) {
           _this.setState(function (_ref2) {
             var updateCount = _ref2.updateCount;
             return { updateCount: updateCount + 1, propsState: propsState };
           });
-        });
+        }).then(scheduler.removeStream.bind(null, id));
         return _this;
       }
 

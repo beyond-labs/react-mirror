@@ -103,10 +103,11 @@ function createMirrorDecorator(config = {}) {
 
         $propsState
           .skipRepeatsWith(pure.propsStateEqual.bind(this))
-          .thru(scheduler.addStream.bind(null, this.depth))
+          .thru(scheduler.addStream.bind(null, this.depth, id))
           .observe(propsState => {
             this.setState(({updateCount}) => ({updateCount: updateCount + 1, propsState}))
           })
+          .then(scheduler.removeStream.bind(null, id))
       }
       getWrappedInstance() {
         invariant(

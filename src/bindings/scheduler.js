@@ -1,27 +1,30 @@
 import createEventSource from '../utils/streams/eventSource'
 
 const createScheduler = () => {
-  const samplers = []
+  const samplers = {}
+  let buffer = {}
   let BUFFERING = false
   return {
-    addStream(priority, $stream) {
-      if (!samplers[priority]) {
-        samplers[priority] = createEventSource()
-        samplers[priority].$stream = samplers[priority].$stream.multicast()
-      }
+    addStream(priority, id, $stream) {
+      samplers[id] = createEventSource()
 
       return $stream
         .tap(evt => {
+          buffer[id] = evt
           if (!BUFFERING) {
             BUFFERING = true
             setTimeout(() => {
+              Object.keys(buffer).forEach(id => samplers[id] && samplers[id].push(true))
               BUFFERING = false
-              samplers.forEach(sampler => sampler.push(true))
+              buffer = {}
             })
           }
         })
-        .sampleWith(samplers[priority].$stream)
-        .skipRepeats()
+        .sampleWith(samplers[id].$stream)
+    },
+    removeStream(id) {
+      delete samplers[id]
+      delete buffer[id]
     }
   }
 }
