@@ -785,6 +785,33 @@ var createMirrorBackend = function createMirrorBackend() {
 
 var MirrorBackend = createMirrorBackend();
 
+var createScheduler = function createScheduler() {
+  var samplers = [];
+  var BUFFERING = false;
+  return {
+    addStream: function addStream(priority, $stream) {
+      if (!samplers[priority]) {
+        samplers[priority] = eventSource$1();
+        samplers[priority].$stream = samplers[priority].$stream.multicast();
+      }
+
+      return $stream.tap(function (evt) {
+        if (!BUFFERING) {
+          BUFFERING = true;
+          setTimeout(function () {
+            BUFFERING = false;
+            samplers.forEach(function (sampler) {
+              return sampler.push(true);
+            });
+          });
+        }
+      }).sampleWith(samplers[priority].$stream).skipRepeats();
+    }
+  };
+};
+
+var scheduler = createScheduler();
+
 var hasOwn = Object.prototype.hasOwnProperty;
 
 var shallowEqual = function shallowEqual(a, b) {
@@ -908,15 +935,16 @@ function createMirrorDecorator() {
           }
         }),
             id = _MirrorBackend$addSto.id,
+            path = _MirrorBackend$addSto.path,
             mirror = _MirrorBackend$addSto.mirror,
             dispatch = _MirrorBackend$addSto.dispatch,
             streams = _MirrorBackend$addSto.streams;
 
-        Object.assign(_this, { id: id, mirror: mirror, dispatch: dispatch });
+        Object.assign(_this, { id: id, depth: path.length, mirror: mirror, dispatch: dispatch });
 
         var $propsState = streams.$state ? most.combine(instantiseMapToProps(mapToProps.bind(_this)), streams.$state, streams.$props) : streams.$props.map(instantiseMapToProps(mapToProps.bind(_this, undefined)));
 
-        $propsState.skipRepeatsWith(pure.propsStateEqual.bind(_this)).observe(function (propsState) {
+        $propsState.skipRepeatsWith(pure.propsStateEqual.bind(_this)).thru(scheduler.addStream.bind(null, _this.depth)).observe(function (propsState) {
           _this.setState(function (_ref2) {
             var updateCount = _ref2.updateCount;
             return { updateCount: updateCount + 1, propsState: propsState };

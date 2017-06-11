@@ -2,6 +2,7 @@ import * as most from 'most'
 import React from 'react'
 import warning from 'warning'
 import invariant from 'invariant'
+import scheduler from './scheduler'
 import MirrorBackend from '../backend'
 import shallowEqual from '../utils/shallowEqual'
 import createEventSource from '../utils/streams/eventSource'
@@ -65,7 +66,7 @@ function createMirrorDecorator(config = {}) {
         let {push: onReceivedProps, $stream: $props} = createEventSource()
         Object.assign(this, {onReceivedProps})
 
-        const {id, mirror, dispatch, streams} = MirrorBackend.addStore(context.id, {
+        const {id, path, mirror, dispatch, streams} = MirrorBackend.addStore(context.id, {
           requesting: ['$state', '$props'],
           identifiers: [
             ...name,
@@ -90,7 +91,7 @@ function createMirrorDecorator(config = {}) {
             instance: this
           }
         })
-        Object.assign(this, {id, mirror, dispatch})
+        Object.assign(this, {id, depth: path.length, mirror, dispatch})
 
         const $propsState = streams.$state
           ? most.combine(
@@ -102,6 +103,7 @@ function createMirrorDecorator(config = {}) {
 
         $propsState
           .skipRepeatsWith(pure.propsStateEqual.bind(this))
+          .thru(scheduler.addStream.bind(null, this.depth))
           .observe(propsState => {
             this.setState(({updateCount}) => ({updateCount: updateCount + 1, propsState}))
           })

@@ -24,13 +24,15 @@ const Counter = Mirror({
   mapToProps(value) {
     return {value}
   }
-})(({value, dispatch}) => (
-  <div>
-    Value: {value}<br />
-    <button onClick={() => dispatch('INCREMENT')}>+</button>
-    <button onClick={() => dispatch('DECREMENT')}>-</button>
-  </div>
-))
+})(function Counter({value, dispatch}) {
+  return (
+    <div>
+      Value: {value}<br />
+      <button onClick={() => dispatch('INCREMENT')}>+</button>
+      <button onClick={() => dispatch('DECREMENT')}>-</button>
+    </div>
+  )
+})
 
 const MultiCounter = Mirror({
   state(mirror) {
@@ -40,7 +42,7 @@ const MultiCounter = Mirror({
           ADD_COUNTER: (value, {payload = 1}) => value + payload,
           REMOVE_COUNTER: (value, {payload = 1}) => Math.max(0, value - payload)
         },
-        0
+        5
       )
     )
 
@@ -53,14 +55,16 @@ const MultiCounter = Mirror({
       numCounters
     }))
   }
-})(({numCounters, total, dispatch}) => (
-  <div>
-    Total: {total}<br />
-    <button onClick={() => dispatch('ADD_COUNTER')}>+1 counters</button>
-    <button onClick={() => dispatch('REMOVE_COUNTER')}>-1 counters</button>
-    {Array(numCounters).fill().map((v, i) => <Counter key={i} />)}
-  </div>
-))
+})(function MultiCounter({numCounters, total, dispatch}) {
+  return (
+    <div>
+      Total: {total}<br />
+      <button onClick={() => dispatch('ADD_COUNTER')}>+1 counters</button>
+      <button onClick={() => dispatch('REMOVE_COUNTER')}>-1 counters</button>
+      {Array(numCounters).fill().map((v, i) => <Counter key={i} />)}
+    </div>
+  )
+})
 
 export {MultiCounter}
 export default Counter
