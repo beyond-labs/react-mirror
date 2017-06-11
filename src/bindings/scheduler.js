@@ -14,7 +14,14 @@ const createScheduler = () => {
           if (!BUFFERING) {
             BUFFERING = true
             setTimeout(() => {
-              Object.keys(buffer).forEach(id => samplers[id] && samplers[id].push(true))
+              const _samplers = []
+              Object.keys(buffer).forEach(id => {
+                if (!_samplers[priority]) _samplers[priority] = []
+                if (samplers[id]) _samplers[priority].push(samplers[id])
+              })
+              _samplers.forEach(samplers => {
+                samplers.forEach(sampler => sampler.push(true))
+              })
               BUFFERING = false
               buffer = {}
             })

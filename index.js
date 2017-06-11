@@ -798,8 +798,15 @@ var createScheduler = function createScheduler() {
         if (!BUFFERING) {
           BUFFERING = true;
           setTimeout(function () {
+            var _samplers = [];
             Object.keys(buffer).forEach(function (id) {
-              return samplers[id] && samplers[id].push(true);
+              if (!_samplers[priority]) _samplers[priority] = [];
+              if (samplers[id]) _samplers[priority].push(samplers[id]);
+            });
+            _samplers.forEach(function (samplers) {
+              samplers.forEach(function (sampler) {
+                return sampler.push(true);
+              });
             });
             BUFFERING = false;
             buffer = {};
@@ -949,6 +956,7 @@ function createMirrorDecorator() {
         var $propsState = streams.$state ? most.combine(instantiseMapToProps(mapToProps.bind(_this)), streams.$state, streams.$props) : streams.$props.map(instantiseMapToProps(mapToProps.bind(_this, undefined)));
 
         $propsState.skipRepeatsWith(pure.propsStateEqual.bind(_this)).thru(scheduler.addStream.bind(null, _this.depth, id)).observe(function (propsState) {
+          console.log(_this.state.updateCount);
           _this.setState(function (_ref2) {
             var updateCount = _ref2.updateCount;
             return { updateCount: updateCount + 1, propsState: propsState };
