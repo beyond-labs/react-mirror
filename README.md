@@ -190,7 +190,7 @@ stores[0] === stores['oigkzfajky']
 
 ##### `$stores`
 
-By comparison, `$stores` emits a value every time a store is added, removed or updated. Each value in `$state` contains low-level structural metadata with reference to the local store. Use `$state` for advanced use cases like accessing component instances, getting children up to a certain depth or generating dependency graphs.
+By comparison, `$stores` emits a value every time a store is added, removed or updated. Each value in `$stores` contains low-level structural metadata with reference to the local store. Use `$stores` for advanced use cases like accessing component instances, getting children up to a certain depth or generating dependency graphs.
 
 #### **Combining Streams**
 
