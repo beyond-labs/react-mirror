@@ -219,7 +219,7 @@ const createMirrorBackend = () => {
       return store
     },
     query: createCursorAPI((cursorMethods, query) => {
-      const runQuery = () => cursorBackend.query(root.id, query)
+      const runQuery = id => cursorBackend.query(id || root.id, query)
       Object.assign(runQuery, cursorMethods)
       return runQuery
     }),

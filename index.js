@@ -766,8 +766,8 @@ var createMirrorBackend = function createMirrorBackend() {
     },
 
     query: createCursorAPI(function (cursorMethods, query) {
-      var runQuery = function runQuery() {
-        return cursorBackend.query(root.id, query);
+      var runQuery = function runQuery(id) {
+        return cursorBackend.query(id || root.id, query);
       };
       Object.assign(runQuery, cursorMethods);
       return runQuery;
@@ -956,7 +956,6 @@ function createMirrorDecorator() {
         var $propsState = streams.$state ? most.combine(instantiseMapToProps(mapToProps.bind(_this)), streams.$state, streams.$props) : streams.$props.map(instantiseMapToProps(mapToProps.bind(_this, undefined)));
 
         $propsState.skipRepeatsWith(pure.propsStateEqual.bind(_this)).thru(scheduler.addStream.bind(null, _this.depth, id)).observe(function (propsState) {
-          console.log(_this.state.updateCount);
           _this.setState(function (_ref2) {
             var updateCount = _ref2.updateCount;
             return { updateCount: updateCount + 1, propsState: propsState };
