@@ -1,5 +1,5 @@
 import React from 'react'
-import Mirror, {handleActions, combineSimple} from '../../index'
+import Mirror, {handleActions, combine} from '../../index'
 
 const Counter = Mirror({
   name: 'counter',
@@ -50,7 +50,7 @@ const MultiCounter = Mirror({
       .children('counter')
       .$state.map(state => state.reduce((pv, v) => pv + v, 0))
 
-    return combineSimple($total, $numCounters).map(([total, numCounters]) => ({
+    return combine($total, $numCounters).map(([total, numCounters]) => ({
       total,
       numCounters
     }))

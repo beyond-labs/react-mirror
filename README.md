@@ -194,46 +194,64 @@ By comparison, `$stores` emits a value every time a store is added, removed or u
 
 #### **Combining Streams**
 
-Mirror exports four helpers (`combine`, `combineSimple`, `combineNested` & `combineEventsWith`) for combining streams together. I've used plain objects in these examples for clarity; only streams work in practice, each value in the resulting stream matches the following patterns.
+Mirror exports four helpers (`combine`, `combineEnums`, `combineNested` & `combineEventsWith`) for combining streams together.
 
 ##### `combine`
 
-`combine` joins enums together, & removes duplicates. Use `combine` to join multiple state streams, or multiple prop streams.
+`combine` returns a stream of arrays that combine values from each input stream.
 
 ```js
 combine(
-  Enum({a: stateA}, {b: stateB}),
-  Enum({a: stateA}, {c: stateC})
-)
-
-// Enum({a: stateA, b: stateB, c: stateC})
-```
-
-##### `combineNested`
-
-`combineNested` inverts an object of enums, creating a single enum whose values match the given argument. Use `combineNested` to join state & prop streams together.
-
-```js
-combineNested({
-  state: Enum({a: stateA, b: stateB}),
-  props: Enum({a: propsA})
-})
-
-// Enum({a: {state: stateA, props: propsA}, b: {state: stateB}})
-```
-
-##### `combineSimple`
-
-`combineSimple` joins each value into an array. Use `combineSimple` to join different kinds of streams together, like an action & state stream.
-
-```js
-combineSimple(
-  {type: 'ACTION_TYPE'},
-  Enum({a: stateA, b: stateB})
+  most.of({type: 'ACTION_TYPE'}),
+  most.of(Enum({a: stateA, b: stateB}))
 )
 
 // [{type: 'ACTION_TYPE'}, Enum({a: stateA, b: stateB})]
 ```
+
+##### `combineEnums`
+
+`combineEnums` joins streams of enums together, & removes duplicates. Use `combineEnums` to join multiple state streams, or multiple prop streams.
+
+```js
+combine(
+  most.of(Enum(
+    {a: stateA},
+    {b: stateB}
+  )),
+  most.of(Enum(
+    {a: stateA},
+    {c: stateC}
+  ))
+)
+
+/*
+  Enum({
+    a: stateA,
+    b: stateB,
+    c: stateC
+  })
+ */
+```
+
+##### `combineNested`
+
+`combineNested` inverts an object containing streams of enums, resulting in a single enum. Use `combineNested` to join state & prop streams together.
+
+```js
+combineNested({
+  state: most.of(Enum({a: stateA, b: stateB})),
+  props: most.of(Enum({a: propsA}))
+})
+
+/*
+  Enum({
+    a: {state: stateA, props: propsA},
+    b: {state: stateB}
+  })
+*/
+```
+
 
 ##### `combineEventsWith`
 
@@ -241,8 +259,10 @@ combineSimple(
 
 ```js
 combineEventsWith(
-  {type: 'ACTION_TYPE', payload, store},
-  Enum({a: stateA}),
+  most.of(event).delay(100),
+  most.of(stateBeforeEvent).concat(
+    most.of(stateAfterEvent).delay(200)
+  ),
   {before: true, after: true}
 )
 

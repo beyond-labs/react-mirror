@@ -4,7 +4,7 @@ import warning from 'warning'
 import createCursorBackend from '../cursor'
 import createCursorAPI from '../utils/createCursorAPI'
 import generateStoreId, {couldBeStoreId} from '../utils/generateStoreId'
-import combineEnum from '../utils/streams/combineEnum'
+import combineValuesIntoEnum from '../utils/streams/combineValuesIntoEnum'
 import createEventSource from '../utils/streams/eventSource'
 import filterUnchangedKeyArrays from '../utils/streams/filterUnchangedKeyArrays'
 
@@ -62,7 +62,7 @@ const createMirrorBackend = () => {
               .thru(filterUnchangedKeyArrays)
               .map(stores => {
                 store.queryResults[queryIndex] = stores
-                return (streamName === '$actions' ? most.mergeArray : combineEnum)(
+                return (streamName === '$actions' ? most.mergeArray : combineValuesIntoEnum)(
                   stores
                     .map(id => {
                       if (id === store.id && query.length && streamName === '$state') {

@@ -460,7 +460,7 @@ var SKIP_TOKEN = '__MIRROR_SKIP_TOKEN__';
 
   Emits values immediately, w/o waiting for input streams to emit their first value
 */
-var combineEnum = function combineEnum(streams, ids) {
+var combineValuesIntoEnum = function combineValuesIntoEnum(streams, ids) {
   if (!streams.length) return most.of(new Enum());
   return most.combineArray(function () {
     for (var _len = arguments.length, values = Array(_len), _key = 0; _key < _len; _key++) {
@@ -616,7 +616,7 @@ var createMirrorBackend = function createMirrorBackend() {
               return queryResults[store.id] ? queryResults[store.id][queryIndex] : [];
             }).thru(filterUnchangedKeyArrays).map(function (stores) {
               store.queryResults[queryIndex] = stores;
-              return (streamName === '$actions' ? most.mergeArray : combineEnum)(stores.map(function (id) {
+              return (streamName === '$actions' ? most.mergeArray : combineValuesIntoEnum)(stores.map(function (id) {
                 if (id === store.id && query.length && streamName === '$state') {
                   return undefined;
                 }
@@ -1120,7 +1120,7 @@ var handleActions = function handleActions(handlers, initialState) {
   };
 };
 
-var combine$1 = function combine$$1() {
+var combineEnums = function combineEnums() {
   for (var _len = arguments.length, streams = Array(_len), _key = 0; _key < _len; _key++) {
     streams[_key] = arguments[_key];
   }
@@ -1128,7 +1128,7 @@ var combine$1 = function combine$$1() {
   if (streams[0] instanceof Array) streams = streams[0];
   invariant(streams.every(function ($stream) {
     return $stream && $stream.subscribe;
-  }), '`combine` only accepts streams');
+  }), '`combineEnums` only accepts streams');
   return most.combineArray(function () {
     for (var _len2 = arguments.length, enumCollection = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
       enumCollection[_key2] = arguments[_key2];
@@ -1207,7 +1207,7 @@ var combineNested = function combineNested(streamMap) {
   });
   invariant(streams.every(function ($stream) {
     return $stream && $stream.subscribe;
-  }), '`combine` only accepts streams');
+  }), '`combineNested` only accepts streams');
   return most.combineArray(function () {
     for (var _len = arguments.length, enumCollection = Array(_len), _key = 0; _key < _len; _key++) {
       enumCollection[_key] = arguments[_key];
@@ -1224,7 +1224,7 @@ var combineNested = function combineNested(streamMap) {
   }, streams);
 };
 
-var combineSimple = function combineSimple() {
+var combine$1 = function combine$$1() {
   for (var _len = arguments.length, streams = Array(_len), _key = 0; _key < _len; _key++) {
     streams[_key] = arguments[_key];
   }
@@ -1232,7 +1232,7 @@ var combineSimple = function combineSimple() {
   if (streams[0] instanceof Array) streams = streams[0];
   invariant(streams.every(function ($stream) {
     return $stream && $stream.subscribe;
-  }), '`combineSimple` only accepts streams');
+  }), '`combine` only accepts streams');
   return most.combineArray(function () {
     for (var _len2 = arguments.length, values = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
       values[_key2] = arguments[_key2];
@@ -1258,9 +1258,9 @@ exports.stores = stores;
 exports.handleActions = handleActions;
 exports.Enum = Enum;
 exports.shallowEqual = shallowEqual;
-exports.combine = combine$1;
+exports.combineEnums = combineEnums;
 exports.combineEventsWith = combineEventsWith;
 exports.combineNested = combineNested;
-exports.combineSimple = combineSimple;
+exports.combine = combine$1;
 exports['default'] = createMirrorDecorator;
 //# sourceMappingURL=index.js.map

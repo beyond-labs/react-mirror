@@ -8,7 +8,7 @@ const SKIP_TOKEN = '__MIRROR_SKIP_TOKEN__'
 
   Emits values immediately, w/o waiting for input streams to emit their first value
 */
-const combineEnum = (streams, ids) => {
+const combineValuesIntoEnum = (streams, ids) => {
   if (!streams.length) return most.of(new Enum())
   return most.combineArray(
     (...values) => {
@@ -25,4 +25,4 @@ const combineEnum = (streams, ids) => {
   )
 }
 
-export default combineEnum
+export default combineValuesIntoEnum

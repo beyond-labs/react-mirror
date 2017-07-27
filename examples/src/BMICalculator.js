@@ -1,5 +1,5 @@
 import React from 'react'
-import Mirror, {combineSimple} from '../../index'
+import Mirror, {combine} from '../../index'
 import Input from './Input'
 
 const BMICalculator = Mirror({
@@ -11,7 +11,7 @@ const BMICalculator = Mirror({
       .child('input/height')
       .$state.map(([state = {value: 170}]) => Number(state.value))
 
-    return combineSimple(weight, height).map(([weight, height]) => ({weight, height}))
+    return combine(weight, height).map(([weight, height]) => ({weight, height}))
   }
 })(function BMICalculator({weight, height}) {
   const BMI = Math.round(weight / Math.pow(height * 0.01, 2))
