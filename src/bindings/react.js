@@ -74,7 +74,10 @@ function createMirrorDecorator(config = {}) {
             Mirror.__COMPONENT_IDENTIFIER__
           ],
           streams: (mirror, dispatch) => {
-            $props = $props.startWith(props).skipRepeatsWith(pure.propsEqual.bind(this))
+            $props = $props
+              .startWith(props)
+              .skipRepeatsWith(pure.propsEqual.bind(this))
+              .tap(props => (this._props = props))
             let $state = typeof state === 'function' && state.call(this, mirror, dispatch)
             warning(
               !state || ($state && $state.subscribe),
@@ -85,6 +88,7 @@ function createMirrorDecorator(config = {}) {
             $state = $state
               .skipRepeatsWith(pure.stateEqual.bind(this))
               .filter(state => state !== undefined)
+              .tap(state => (this._state = state))
             return {$state, $props}
           },
           metadata: {
@@ -105,6 +109,7 @@ function createMirrorDecorator(config = {}) {
           .skipRepeatsWith(pure.propsStateEqual.bind(this))
           .thru(scheduler.addStream.bind(null, this.depth, id))
           .observe(propsState => {
+            this._propsState = propsState
             this.setState(({updateCount}) => ({updateCount: updateCount + 1, propsState}))
           })
           .then(scheduler.removeStream.bind(null, id))

@@ -930,7 +930,9 @@ function createMirrorDecorator() {
           requesting: ['$state', '$props'],
           identifiers: [].concat(toConsumableArray(name), toConsumableArray(getPropNames(_this.props.withName)), [Mirror.__COMPONENT_IDENTIFIER__]),
           streams: function streams(mirror, dispatch) {
-            $props = $props.startWith(props).skipRepeatsWith(pure.propsEqual.bind(_this));
+            $props = $props.startWith(props).skipRepeatsWith(pure.propsEqual.bind(_this)).tap(function (props) {
+              return _this._props = props;
+            });
             var $state = typeof state === 'function' && state.call(_this, mirror, dispatch);
             warning(!state || $state && $state.subscribe, '`state` should return a stream, did you forget a "return" statement? (at "%s")', [_name].concat(name.filter(function (name) {
               return typeof name === 'string';
@@ -938,6 +940,8 @@ function createMirrorDecorator() {
             if (!state || !$state || !$state.subscribe) return { $props: $props };
             $state = $state.skipRepeatsWith(pure.stateEqual.bind(_this)).filter(function (state) {
               return state !== undefined;
+            }).tap(function (state) {
+              return _this._state = state;
             });
             return { $state: $state, $props: $props };
           },
@@ -956,6 +960,7 @@ function createMirrorDecorator() {
         var $propsState = streams.$state ? most.combine(instantiseMapToProps(mapToProps.bind(_this)), streams.$state, streams.$props) : streams.$props.map(instantiseMapToProps(mapToProps.bind(_this, undefined)));
 
         $propsState.skipRepeatsWith(pure.propsStateEqual.bind(_this)).thru(scheduler.addStream.bind(null, _this.depth, id)).observe(function (propsState) {
+          _this._propsState = propsState;
           _this.setState(function (_ref2) {
             var updateCount = _ref2.updateCount;
             return { updateCount: updateCount + 1, propsState: propsState };
