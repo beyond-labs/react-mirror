@@ -185,8 +185,8 @@ function createMirrorDecorator(config = {}) {
     }
 
     Object.defineProperties(Mirror, {
-      mirror: {get: () => (createStaticCursors(), Mirror.mirror)},
-      dispatch: {get: () => (createStaticCursors(), Mirror.dispatch)}
+      mirror: {get: () => (createStaticCursors(), Mirror.mirror), configurable: true},
+      dispatch: {get: () => (createStaticCursors(), Mirror.dispatch), configurable: true}
     })
 
     Mirror.__WITH_NAME_CACHE__ = Mirror.__COMPONENT_IDENTIFIER__.__WITH_NAME_CACHE__ || {}

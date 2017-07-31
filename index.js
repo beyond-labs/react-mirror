@@ -1062,10 +1062,10 @@ function createMirrorDecorator() {
     Object.defineProperties(Mirror, {
       mirror: { get: function get$$1() {
           return createStaticCursors(), Mirror.mirror;
-        } },
+        }, configurable: true },
       dispatch: { get: function get$$1() {
           return createStaticCursors(), Mirror.dispatch;
-        } }
+        }, configurable: true }
     });
 
     Mirror.__WITH_NAME_CACHE__ = Mirror.__COMPONENT_IDENTIFIER__.__WITH_NAME_CACHE__ || {};
