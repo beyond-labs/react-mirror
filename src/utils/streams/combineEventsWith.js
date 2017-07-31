@@ -5,14 +5,14 @@ const SKIP_TOKEN = '__MIRROR_SKIP_TOKEN__'
 
 const combineEventsWithDefault = (eventStream, otherStream) => {
   return most
-    .combine((event, other) => ({event, other}))
+    .combine((event, other) => ({event, other}), eventStream, otherStream)
     .loop(
       ({prevAction, before}, {event, other: after}) => ({
         seed: {
           prevAction: event,
           before: prevAction === event ? SKIP_TOKEN : after
         },
-        value: before === SKIP_TOKEN ? {before, event, after} : SKIP_TOKEN
+        value: before === SKIP_TOKEN ? SKIP_TOKEN : {before, event, after}
       }),
       {}
     )

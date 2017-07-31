@@ -1155,7 +1155,7 @@ var SKIP_TOKEN$2 = '__MIRROR_SKIP_TOKEN__';
 var combineEventsWithDefault = function combineEventsWithDefault(eventStream, otherStream) {
   return most.combine(function (event, other) {
     return { event: event, other: other };
-  }).loop(function (_ref, _ref2) {
+  }, eventStream, otherStream).loop(function (_ref, _ref2) {
     var prevAction = _ref.prevAction,
         before = _ref.before;
     var event = _ref2.event,
@@ -1165,7 +1165,7 @@ var combineEventsWithDefault = function combineEventsWithDefault(eventStream, ot
         prevAction: event,
         before: prevAction === event ? SKIP_TOKEN$2 : after
       },
-      value: before === SKIP_TOKEN$2 ? { before: before, event: event, after: after } : SKIP_TOKEN$2
+      value: before === SKIP_TOKEN$2 ? SKIP_TOKEN$2 : { before: before, event: event, after: after }
     };
   }, {}).filter(function (value) {
     return value !== SKIP_TOKEN$2;
