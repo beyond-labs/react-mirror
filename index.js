@@ -251,6 +251,7 @@ var createCursorBackend$1 = function createCursorBackend() {
 
   return {
     query: function query(origin, _query3) {
+      if (!prevTree) return [];
       return runQuery(prevTree, [origin], _query3);
     },
     updateNode: function updateNode(tree, op) {

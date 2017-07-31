@@ -72,6 +72,7 @@ const createCursorBackend = () => {
 
   return {
     query(origin, query) {
+      if (!prevTree) return []
       return runQuery(prevTree, [origin], query)
     },
     updateNode(tree, op) {
