@@ -143,7 +143,43 @@ var possibleConstructorReturn = function (self, call) {
 
 
 
+var slicedToArray = function () {
+  function sliceIterator(arr, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
 
+    try {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"]) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  return function (arr, i) {
+    if (Array.isArray(arr)) {
+      return arr;
+    } else if (Symbol.iterator in Object(arr)) {
+      return sliceIterator(arr, i);
+    } else {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
+  };
+}();
 
 
 
@@ -197,7 +233,7 @@ var getParents = function getParents(node) {
 };
 
 var testFilter = function testFilter(node, filter) {
-  if (!filter || filter === node.id || filter === node.component || node.identifiers.includes(filter)) {
+  if (!filter || filter === node.id || node.identifiers.includes(filter)) {
     return true;
   }
   return false;
@@ -591,11 +627,11 @@ var createMirrorBackend = function createMirrorBackend() {
 
     Object.assign(store, { identifiers: identifiers, metadata: metadata });
 
-    invariant(!identifiers.some(couldBeStoreId), 'Cannot precede all-uppercase identifiers with "_" ("%s") because they could conflict with internally-used IDs', identifiers.find(couldBeStoreId));
+    invariant(!identifiers.some(couldBeStoreId), 'Cannot precede all-uppercase identifiers with "_" ("%s") because they could ' + 'conflict with internally-used IDs', identifiers.find(couldBeStoreId));
 
     var $storeDeleted = $queryResults.filter(function () {
       return !storeMap[store.id];
-    });
+    }).multicast();
 
     var ADD_STREAMS_ASYNC = void 0;
 
@@ -661,7 +697,7 @@ var createMirrorBackend = function createMirrorBackend() {
         }
 
         $queryResults.until($storeDeleted.tap(function () {
-          warning(false, 'No store matched an action ("%s"), & the dispatcher ("%s") was removed. We\'ve discarded the action. You could try dispatching the action via a proxy.', type, store.id);
+          warning(false, 'No store matched an action ("%s"), & the dispatcher ("%s") was ' + "removed. We've discarded the action. You could try dispatching the " + 'action via a proxy.', type, store.id);
         })).map(function () {
           return cursorBackend.query(store.id, query);
         }).filter(function (stores) {
@@ -714,9 +750,23 @@ var createMirrorBackend = function createMirrorBackend() {
       invariant(parent || !root, 'Cannot add store as a child of "%s", because "%s" does not exist', parentId, parentId);
 
       var store = {
+        /*
+          '_AAC'
+        */
         id: generateStoreId(),
+        /*
+          ['_AA', '_BX']
+        */
         path: root ? parent.path.concat(parentId) : [],
+        /* {$actions, $state, $props} */
         streams: {},
+        /*
+          {
+            $actions: {type: 'INCREMENT', payload: 1},
+            $state: {value: 2},
+            $props: {}
+          }
+        */
         tails: {},
         queries: [],
         queryTypes: [],
@@ -1150,32 +1200,28 @@ var combineEnums = function combineEnums() {
   }, streams);
 };
 
-var SKIP_TOKEN$2 = '__MIRROR_SKIP_TOKEN__';
-
 var combineEventsWithDefault = function combineEventsWithDefault(eventStream, otherStream) {
-  return most.combine(function (event, other) {
-    return { event: event, other: other };
-  }, eventStream, otherStream).loop(function (_ref, _ref2) {
-    var prevAction = _ref.prevAction,
-        before = _ref.before;
-    var event = _ref2.event,
-        after = _ref2.other;
-    return {
-      seed: {
-        prevAction: event,
-        before: prevAction === event ? SKIP_TOKEN$2 : after
-      },
-      value: before === SKIP_TOKEN$2 ? SKIP_TOKEN$2 : { before: before, event: event, after: after }
-    };
-  }, {}).filter(function (value) {
-    return value !== SKIP_TOKEN$2;
+  otherStream = otherStream.scan(function (_ref, after) {
+    var _ref2 = slicedToArray(_ref, 2),
+        before = _ref2[1];
+
+    return [before, after];
+  }, []).multicast();
+  return otherStream.sample(function (event, _ref3) {
+    var _ref4 = slicedToArray(_ref3, 2),
+        before = _ref4[0],
+        after = _ref4[1];
+
+    return { before: before, event: event, after: after };
+  }, eventStream, otherStream).skipRepeatsWith(function (a, b) {
+    return a.event === b.event;
   });
 };
 
 var combineEventsWithBefore = function combineEventsWithBefore(eventStream, otherStream) {
   return eventStream.sample(function (event, other) {
     return { before: other, event: event };
-  }, otherStream);
+  }, eventStream, otherStream);
 };
 
 var combineEventsWithAfter = function combineEventsWithAfter(eventStream, otherStream) {

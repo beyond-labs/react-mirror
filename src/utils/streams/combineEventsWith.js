@@ -1,26 +1,22 @@
-import * as most from 'most'
 import invariant from 'invariant'
 
-const SKIP_TOKEN = '__MIRROR_SKIP_TOKEN__'
-
 const combineEventsWithDefault = (eventStream, otherStream) => {
-  return most
-    .combine((event, other) => ({event, other}), eventStream, otherStream)
-    .loop(
-      ({prevAction, before}, {event, other: after}) => ({
-        seed: {
-          prevAction: event,
-          before: prevAction === event ? SKIP_TOKEN : after
-        },
-        value: before === SKIP_TOKEN ? SKIP_TOKEN : {before, event, after}
-      }),
-      {}
+  otherStream = otherStream.scan(([, before], after) => [before, after], []).multicast()
+  return otherStream
+    .sample(
+      (event, [before, after]) => ({before, event, after}),
+      eventStream,
+      otherStream
     )
-    .filter(value => value !== SKIP_TOKEN)
+    .skipRepeatsWith((a, b) => a.event === b.event)
 }
 
 const combineEventsWithBefore = (eventStream, otherStream) => {
-  return eventStream.sample((event, other) => ({before: other, event}), otherStream)
+  return eventStream.sample(
+    (event, other) => ({before: other, event}),
+    eventStream,
+    otherStream
+  )
 }
 
 const combineEventsWithAfter = (eventStream, otherStream) => {

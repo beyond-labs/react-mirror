@@ -29,11 +29,12 @@ const createMirrorBackend = () => {
 
     invariant(
       !identifiers.some(couldBeStoreId),
-      'Cannot precede all-uppercase identifiers with "_" ("%s") because they could conflict with internally-used IDs',
+      'Cannot precede all-uppercase identifiers with "_" ("%s") because they could ' +
+        'conflict with internally-used IDs',
       identifiers.find(couldBeStoreId)
     )
 
-    const $storeDeleted = $queryResults.filter(() => !storeMap[store.id])
+    const $storeDeleted = $queryResults.filter(() => !storeMap[store.id]).multicast()
 
     let ADD_STREAMS_ASYNC
 
@@ -62,7 +63,9 @@ const createMirrorBackend = () => {
               .thru(filterUnchangedKeyArrays)
               .map(stores => {
                 store.queryResults[queryIndex] = stores
-                return (streamName === '$actions' ? most.mergeArray : combineValuesIntoEnum)(
+                return (streamName === '$actions'
+                  ? most.mergeArray
+                  : combineValuesIntoEnum)(
                   stores
                     .map(id => {
                       if (id === store.id && query.length && streamName === '$state') {
@@ -118,7 +121,9 @@ const createMirrorBackend = () => {
             $storeDeleted.tap(() => {
               warning(
                 false,
-                'No store matched an action ("%s"), & the dispatcher ("%s") was removed. We\'ve discarded the action. You could try dispatching the action via a proxy.',
+                'No store matched an action ("%s"), & the dispatcher ("%s") was ' +
+                  "removed. We've discarded the action. You could try dispatching the " +
+                  'action via a proxy.',
                 type,
                 store.id
               )
@@ -172,9 +177,23 @@ const createMirrorBackend = () => {
       )
 
       const store = {
+        /*
+          '_AAC'
+        */
         id: generateStoreId(),
+        /*
+          ['_AA', '_BX']
+        */
         path: root ? parent.path.concat(parentId) : [],
+        /* {$actions, $state, $props} */
         streams: {},
+        /*
+          {
+            $actions: {type: 'INCREMENT', payload: 1},
+            $state: {value: 2},
+            $props: {}
+          }
+        */
         tails: {},
         queries: [],
         queryTypes: [],

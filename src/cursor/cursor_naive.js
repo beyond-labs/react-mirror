@@ -24,12 +24,7 @@ const getParents = node => {
 }
 
 const testFilter = (node, filter) => {
-  if (
-    !filter ||
-    filter === node.id ||
-    filter === node.component ||
-    node.identifiers.includes(filter)
-  ) {
+  if (!filter || filter === node.id || node.identifiers.includes(filter)) {
     return true
   }
   return false

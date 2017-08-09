@@ -27,7 +27,8 @@ const Counter = Mirror({
 })(function Counter({value, dispatch}) {
   return (
     <div>
-      Value: {value}<br />
+      Value: {value}
+      <br />
       <button onClick={() => dispatch('INCREMENT')}>+</button>
       <button onClick={() => dispatch('DECREMENT')}>-</button>
     </div>
@@ -58,7 +59,8 @@ const MultiCounter = Mirror({
 })(function MultiCounter({numCounters, total, dispatch}) {
   return (
     <div>
-      Total: {total}<br />
+      Total: {total}
+      <br />
       <button onClick={() => dispatch('ADD_COUNTER')}>+1 counters</button>
       <button onClick={() => dispatch('REMOVE_COUNTER')}>-1 counters</button>
       {Array(numCounters).fill().map((v, i) => <Counter key={i} />)}
