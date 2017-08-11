@@ -645,7 +645,7 @@ var createMirrorBackend = function createMirrorBackend() {
             store.queryTypes.push(streamName);
             store.queryResults.push([]);
             if (ADD_STREAMS_ASYNC) {
-              warning(false, 'Accessing "mirror.%s" after a store has been added is ineffcient, you can batch queries with `updateStore` to improve performance', streamName);
+              warning(false, 'Accessing "mirror.%s" after a store has been added is ineffcient, you ' + 'can batch queries with `updateStore` to improve performance', streamName);
               onStoreUpdated({ store: store, op: 'update' });
             }
 
@@ -1097,6 +1097,7 @@ function createMirrorDecorator() {
 
       var _MirrorBackend$addSto2 = MirrorBackend.addStore(null, {
         identifiers: ['MIRROR/static', 'MIRROR/static/' + _name],
+        requesting: ['$props', '$state'],
         metadata: {
           static: Mirror
         }

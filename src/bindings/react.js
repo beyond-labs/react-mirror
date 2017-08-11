@@ -173,6 +173,7 @@ function createMirrorDecorator(config = {}) {
 
       const {mirror, dispatch} = MirrorBackend.addStore(null, {
         identifiers: ['MIRROR/static', `MIRROR/static/${_name}`],
+        requesting: ['$props', '$state'],
         metadata: {
           static: Mirror
         }
