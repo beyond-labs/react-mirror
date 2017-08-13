@@ -149,7 +149,13 @@ const createMirrorBackend = () => {
 
     if (!store.streams.$actions) {
       const {push: dispatch, $stream: $actions} = createEventSource()
-      store.streams.$actions = $actions.until($storeDeleted).thru(multicast)
+      const initialize = {type: 'INITIALIZE', payload: undefined, store: store.id}
+      const teardown = {type: 'TEARDOWN', payload: undefined, store: store.id}
+      store.streams.$actions = $actions
+        .startWith(initialize)
+        .until($storeDeleted)
+        .concat(most.of(teardown))
+        .thru(multicast)
       store.streams.$actions.push = dispatch
     }
 
@@ -210,7 +216,6 @@ const createMirrorBackend = () => {
       updateStore(store, {requesting, streams, identifiers, metadata})
       storeMap[store.id] = store
       onStoreUpdated({store, op: 'add'})
-      store.dispatch('INITIALIZE')
 
       return store
     },
@@ -221,7 +226,6 @@ const createMirrorBackend = () => {
 
       const traverse = store => {
         Object.values(store.children).forEach(traverse)
-        store.dispatch('TEARDOWN')
         delete storeMap[store.id]
         onStoreUpdated({store, op: 'remove'})
       }

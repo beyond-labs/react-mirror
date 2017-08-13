@@ -50,3 +50,7 @@ console.log(events)
 ```
 
 This is important if one store combines multiple streams from another store, & depends on the order of events relative to each stream (eg, using `combineEventsWith`)
+
+## 2.0.0-alpha.4
+
+* emit `INITIALIZE` before actions dispatched before store creation

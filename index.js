@@ -943,7 +943,9 @@ var createMirrorBackend = function createMirrorBackend() {
           dispatch = _createEventSource2.push,
           $actions = _createEventSource2.$stream;
 
-      store.streams.$actions = $actions.until($storeDeleted).thru(multicast);
+      var initialize = { type: 'INITIALIZE', payload: undefined, store: store.id };
+      var teardown = { type: 'TEARDOWN', payload: undefined, store: store.id };
+      store.streams.$actions = $actions.startWith(initialize).until($storeDeleted).concat(most.of(teardown)).thru(multicast);
       store.streams.$actions.push = dispatch;
     }
 
@@ -1004,7 +1006,6 @@ var createMirrorBackend = function createMirrorBackend() {
       _updateStore(store, { requesting: requesting, streams: streams, identifiers: identifiers, metadata: metadata });
       storeMap[store.id] = store;
       onStoreUpdated({ store: store, op: 'add' });
-      store.dispatch('INITIALIZE');
 
       return store;
     },
@@ -1015,7 +1016,6 @@ var createMirrorBackend = function createMirrorBackend() {
 
       var traverse = function traverse(store) {
         Object.values(store.children).forEach(traverse);
-        store.dispatch('TEARDOWN');
         delete storeMap[store.id];
         onStoreUpdated({ store: store, op: 'remove' });
       };
