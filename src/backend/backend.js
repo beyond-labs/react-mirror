@@ -4,6 +4,7 @@ import warning from 'warning'
 import createCursorBackend from '../cursor'
 import createCursorAPI from '../utils/createCursorAPI'
 import generateStoreId, {couldBeStoreId} from '../utils/generateStoreId'
+import {multicast, prioritise} from '../utils/multicast'
 import combineValuesIntoEnum from '../utils/streams/combineValuesIntoEnum'
 import createEventSource from '../utils/streams/eventSource'
 import filterUnchangedKeyArrays from '../utils/streams/filterUnchangedKeyArrays'
@@ -73,6 +74,7 @@ const createMirrorBackend = () => {
                         return undefined
                       }
                       let $stream = storeMap[id] && storeMap[id].streams[streamName]
+                      if (store.id === id) $stream = $stream.thru(prioritise(-1))
                       if ($stream && storeMap[id] && storeMap[id].tails[streamName]) {
                         $stream = $stream.startWith(storeMap[id].tails[streamName])
                       }
@@ -147,7 +149,7 @@ const createMirrorBackend = () => {
 
     if (!store.streams.$actions) {
       const {push: dispatch, $stream: $actions} = createEventSource()
-      store.streams.$actions = $actions.until($storeDeleted).multicast()
+      store.streams.$actions = $actions.until($storeDeleted).thru(multicast)
       store.streams.$actions.push = dispatch
     }
 
@@ -156,7 +158,7 @@ const createMirrorBackend = () => {
       Object.keys(_streams).forEach(streamName => {
         _streams[streamName] = _streams[streamName]
           .tap(evt => (store.tails[streamName] = evt))
-          .multicast()
+          .thru(multicast)
       })
       store.streams = Object.assign(_streams, {
         $actions: store.streams.$actions

@@ -388,6 +388,229 @@ var generateStoreId = function generateStoreId() {
 
 var couldBeStoreId = RegExp.prototype.test.bind(/^_[A-Z]{2,12}$/);
 
+var MulticastDisposable = function () {
+  function MulticastDisposable(source, sink) {
+    classCallCheck(this, MulticastDisposable);
+
+    this.source = source;
+    this.sink = sink;
+    this.disposed = false;
+  }
+
+  createClass(MulticastDisposable, [{
+    key: "dispose",
+    value: function dispose() {
+      if (this.disposed) {
+        return;
+      }
+      this.disposed = true;
+      var remaining = this.source.remove(this.sink);
+      return remaining === 0 && this.source._dispose();
+    }
+  }]);
+  return MulticastDisposable;
+}();
+
+function tryEvent(t, x, sink) {
+  try {
+    sink.event(t, x);
+  } catch (e) {
+    sink.error(t, e);
+  }
+}
+
+function tryEnd(t, x, sink) {
+  try {
+    sink.end(t, x);
+  } catch (e) {
+    sink.error(t, e);
+  }
+}
+
+var dispose = function dispose(disposable) {
+  return disposable.dispose();
+};
+
+var emptyDisposable = {
+  dispose: function dispose() {}
+};
+
+/** @license MIT License (c) copyright 2010-2016 original author or authors */
+
+  // Non-mutating array operations
+
+  // cons :: a -> [a] -> [a]
+  // a with x prepended
+  // remove :: Int -> [a] -> [a]
+  // remove element at index
+  function remove (i, a) {  // eslint-disable-line complexity
+    if (i < 0) {
+      throw new TypeError('i must be >= 0')
+    }
+
+    var l = a.length;
+    if (l === 0 || i >= l) { // exit early if index beyond end of array
+      return a
+    }
+
+    if (l === 1) { // exit early if index in bounds and length === 1
+      return []
+    }
+
+    return unsafeRemove(i, a, l - 1)
+  }
+
+  // unsafeRemove :: Int -> [a] -> Int -> [a]
+  // Internal helper to remove element at index
+  function unsafeRemove (i, a, l) {
+    var b = new Array(l);
+    var j;
+    for (j = 0; j < i; ++j) {
+      b[j] = a[j];
+    }
+    for (j = i; j < l; ++j) {
+      b[j] = a[j + 1];
+    }
+
+    return b
+  }
+
+  // findIndex :: a -> [a] -> Int
+  // find index of x in a, from the left
+  function findIndex (x, a) {
+    for (var i = 0, l = a.length; i < l; ++i) {
+      if (x === a[i]) {
+        return i
+      }
+    }
+    return -1
+  }
+
+function insertWhen(x, a, f) {
+  var l = a.length;
+  var b = new Array(l + 1);
+
+  var i = 0;
+  for (; i < l; ++i) {
+    if (f(x, a[i])) {
+      break;
+    }
+    b[i] = a[i];
+  }
+
+  b[i] = x;
+
+  for (; i < l; ++i) {
+    b[i + 1] = a[i];
+  }
+
+  return b;
+}
+
+function comparePriority(a, b) {
+  return (a.priority || 0) > (b.priority || 0);
+}
+
+var MulticastSource = function () {
+  function MulticastSource(source) {
+    classCallCheck(this, MulticastSource);
+
+    this.source = source;
+    this.sinks = [];
+    this._disposable = emptyDisposable;
+  }
+
+  createClass(MulticastSource, [{
+    key: 'run',
+    value: function run(sink, scheduler) {
+      var n = this.add(sink);
+      if (n === 1) {
+        this._disposable = this.source.run(this, scheduler);
+      }
+      return new MulticastDisposable(this, sink);
+    }
+  }, {
+    key: '_dispose',
+    value: function _dispose() {
+      var disposable = this._disposable;
+      this._disposable = emptyDisposable;
+      return Promise.resolve(disposable).then(dispose);
+    }
+  }, {
+    key: 'add',
+    value: function add(sink) {
+      this.sinks = insertWhen(sink, this.sinks, comparePriority);
+      return this.sinks.length;
+    }
+  }, {
+    key: 'remove',
+    value: function remove$$1(sink) {
+      var i = findIndex(sink, this.sinks);
+      // istanbul ignore next
+      if (i >= 0) {
+        this.sinks = remove(i, this.sinks);
+      }
+
+      return this.sinks.length;
+    }
+  }, {
+    key: 'event',
+    value: function event(time, value) {
+      var s = this.sinks;
+      if (s.length === 1) {
+        return s[0].event(time, value);
+      }
+      for (var i = 0; i < s.length; ++i) {
+        tryEvent(time, value, s[i]);
+      }
+    }
+  }, {
+    key: 'end',
+    value: function end(time, value) {
+      var s = this.sinks;
+      for (var i = 0; i < s.length; ++i) {
+        tryEnd(time, value, s[i]);
+      }
+    }
+  }, {
+    key: 'error',
+    value: function error(time, err) {
+      var s = this.sinks;
+      for (var i = 0; i < s.length; ++i) {
+        s[i].error(time, err);
+      }
+    }
+  }]);
+  return MulticastSource;
+}();
+
+var Prioritise = function () {
+  function Prioritise(priority, source) {
+    classCallCheck(this, Prioritise);
+
+    this.source = source;
+    this.priority = priority;
+  }
+
+  createClass(Prioritise, [{
+    key: "run",
+    value: function run(sink, scheduler) {
+      sink.priority = this.priority;
+      return this.source.run(sink, scheduler);
+    }
+  }]);
+  return Prioritise;
+}();
+
+function multicast(stream) {
+  var source = stream.source;
+  return source instanceof MulticastSource ? stream : new stream.constructor(new MulticastSource(source));
+}
+
+function prioritise(priority, stream) {
+  return !stream ? prioritise.bind(this, priority) : new stream.constructor(new Prioritise(priority, stream.source));
+}
+
 var Enum = function (_Array) {
   inherits(Enum, _Array);
 
@@ -658,6 +881,7 @@ var createMirrorBackend = function createMirrorBackend() {
                   return undefined;
                 }
                 var $stream = storeMap[id] && storeMap[id].streams[streamName];
+                if (store.id === id) $stream = $stream.thru(prioritise(-1));
                 if ($stream && storeMap[id] && storeMap[id].tails[streamName]) {
                   $stream = $stream.startWith(storeMap[id].tails[streamName]);
                 }
@@ -719,7 +943,7 @@ var createMirrorBackend = function createMirrorBackend() {
           dispatch = _createEventSource2.push,
           $actions = _createEventSource2.$stream;
 
-      store.streams.$actions = $actions.until($storeDeleted).multicast();
+      store.streams.$actions = $actions.until($storeDeleted).thru(multicast);
       store.streams.$actions.push = dispatch;
     }
 
@@ -728,7 +952,7 @@ var createMirrorBackend = function createMirrorBackend() {
       Object.keys(_streams).forEach(function (streamName) {
         _streams[streamName] = _streams[streamName].tap(function (evt) {
           return store.tails[streamName] = evt;
-        }).multicast();
+        }).thru(multicast);
       });
       store.streams = Object.assign(_streams, {
         $actions: store.streams.$actions
