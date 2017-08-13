@@ -872,11 +872,20 @@ var createMirrorBackend = function createMirrorBackend() {
               onStoreUpdated({ store: store, op: 'update' });
             }
 
-            return $queryResults.map(function (queryResults) {
+            var teardown = function teardown(store) {
+              return {
+                type: 'TEARDOWN',
+                payload: undefined,
+                store: store
+              };
+            };
+
+            var $stream = $queryResults.map(function (queryResults) {
               return queryResults[store.id] ? queryResults[store.id][queryIndex] : [];
             }).thru(filterUnchangedKeyArrays).map(function (stores) {
+              var prev = store.queryResults[queryIndex];
               store.queryResults[queryIndex] = stores;
-              return (streamName === '$actions' ? most.mergeArray : combineValuesIntoEnum)(stores.map(function (id) {
+              var $stores = stores.map(function (id) {
                 if (id === store.id && query.length && streamName === '$state') {
                   return undefined;
                 }
@@ -888,8 +897,41 @@ var createMirrorBackend = function createMirrorBackend() {
                 return $stream;
               }).filter(function (s) {
                 return s;
-              }), stores);
+              });
+              if (streamName === '$actions') {
+                var deletedStores = [];
+                var next = new Set(stores);
+                var _iteratorNormalCompletion = true;
+                var _didIteratorError = false;
+                var _iteratorError = undefined;
+
+                try {
+                  for (var _iterator = prev[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                    var id = _step.value;
+                    if (!next.has(id)) deletedStores.push(id);
+                  }
+                } catch (err) {
+                  _didIteratorError = true;
+                  _iteratorError = err;
+                } finally {
+                  try {
+                    if (!_iteratorNormalCompletion && _iterator.return) {
+                      _iterator.return();
+                    }
+                  } finally {
+                    if (_didIteratorError) {
+                      throw _iteratorError;
+                    }
+                  }
+                }
+
+                return most.from(deletedStores.map(teardown)).concat(most.mergeArray($stores));
+              } else {
+                return combineValuesIntoEnum($stores, stores);
+              }
             }).switchLatest().until($storeDeleted);
+
+            return streamName === '$actions' ? $stream.concat(most.of(teardown(store.id))) : $stream;
           }
         });
       });
@@ -944,8 +986,7 @@ var createMirrorBackend = function createMirrorBackend() {
           $actions = _createEventSource2.$stream;
 
       var initialize = { type: 'INITIALIZE', payload: undefined, store: store.id };
-      var teardown = { type: 'TEARDOWN', payload: undefined, store: store.id };
-      store.streams.$actions = $actions.startWith(initialize).until($storeDeleted).concat(most.of(teardown)).thru(multicast);
+      store.streams.$actions = $actions.startWith(initialize).until($storeDeleted).thru(multicast);
       store.streams.$actions.push = dispatch;
     }
 
@@ -1236,6 +1277,7 @@ function createMirrorDecorator() {
 
         $propsState.skipRepeatsWith(pure.propsStateEqual.bind(_this)).thru(scheduler.addStream.bind(null, _this.depth, id)).observe(function (propsState) {
           _this._propsState = propsState;
+          if (_this._unmounted) return;
           _this.setState(function (_ref2) {
             var updateCount = _ref2.updateCount;
             return { updateCount: updateCount + 1, propsState: propsState };
@@ -1277,6 +1319,7 @@ function createMirrorDecorator() {
       }, {
         key: 'componentWillUnmount',
         value: function componentWillUnmount() {
+          this._unmounted = true;
           MirrorBackend.removeStore(this.id);
         }
       }, {

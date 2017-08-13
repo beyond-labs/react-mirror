@@ -58,34 +58,50 @@ const createMirrorBackend = () => {
               onStoreUpdated({store, op: 'update'})
             }
 
-            return $queryResults
+            const teardown = store => ({
+              type: 'TEARDOWN',
+              payload: undefined,
+              store
+            })
+
+            const $stream = $queryResults
               .map(queryResults => {
                 return queryResults[store.id] ? queryResults[store.id][queryIndex] : []
               })
               .thru(filterUnchangedKeyArrays)
               .map(stores => {
+                const prev = store.queryResults[queryIndex]
                 store.queryResults[queryIndex] = stores
-                return (streamName === '$actions'
-                  ? most.mergeArray
-                  : combineValuesIntoEnum)(
-                  stores
-                    .map(id => {
-                      if (id === store.id && query.length && streamName === '$state') {
-                        return undefined
-                      }
-                      let $stream = storeMap[id] && storeMap[id].streams[streamName]
-                      if (store.id === id) $stream = $stream.thru(prioritise(-1))
-                      if ($stream && storeMap[id] && storeMap[id].tails[streamName]) {
-                        $stream = $stream.startWith(storeMap[id].tails[streamName])
-                      }
-                      return $stream
-                    })
-                    .filter(s => s),
-                  stores
-                )
+                const $stores = stores
+                  .map(id => {
+                    if (id === store.id && query.length && streamName === '$state') {
+                      return undefined
+                    }
+                    let $stream = storeMap[id] && storeMap[id].streams[streamName]
+                    if (store.id === id) $stream = $stream.thru(prioritise(-1))
+                    if ($stream && storeMap[id] && storeMap[id].tails[streamName]) {
+                      $stream = $stream.startWith(storeMap[id].tails[streamName])
+                    }
+                    return $stream
+                  })
+                  .filter(s => s)
+                if (streamName === '$actions') {
+                  const deletedStores = []
+                  const next = new Set(stores)
+                  for (const id of prev) if (!next.has(id)) deletedStores.push(id)
+                  return most
+                    .from(deletedStores.map(teardown))
+                    .concat(most.mergeArray($stores))
+                } else {
+                  return combineValuesIntoEnum($stores, stores)
+                }
               })
               .switchLatest()
               .until($storeDeleted)
+
+            return streamName === '$actions'
+              ? $stream.concat(most.of(teardown(store.id)))
+              : $stream
           }
         })
       })
@@ -150,11 +166,9 @@ const createMirrorBackend = () => {
     if (!store.streams.$actions) {
       const {push: dispatch, $stream: $actions} = createEventSource()
       const initialize = {type: 'INITIALIZE', payload: undefined, store: store.id}
-      const teardown = {type: 'TEARDOWN', payload: undefined, store: store.id}
       store.streams.$actions = $actions
         .startWith(initialize)
         .until($storeDeleted)
-        .concat(most.of(teardown))
         .thru(multicast)
       store.streams.$actions.push = dispatch
     }

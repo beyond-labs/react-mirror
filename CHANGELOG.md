@@ -54,3 +54,8 @@ This is important if one store combines multiple streams from another store, & d
 ## 2.0.0-alpha.4
 
 * emit `INITIALIZE` before actions dispatched before store creation
+
+## 2.0.0-alpha.5
+
+* no `setState` errors after components unmount
+* stores receive `TEARDOWN` properly

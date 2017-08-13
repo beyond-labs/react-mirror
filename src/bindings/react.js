@@ -110,6 +110,7 @@ function createMirrorDecorator(config = {}) {
           .thru(scheduler.addStream.bind(null, this.depth, id))
           .observe(propsState => {
             this._propsState = propsState
+            if (this._unmounted) return
             this.setState(({updateCount}) => ({updateCount: updateCount + 1, propsState}))
           })
           .then(scheduler.removeStream.bind(null, id))
@@ -140,6 +141,7 @@ function createMirrorDecorator(config = {}) {
         return nextState.updateCount > this.state.updateCount
       }
       componentWillUnmount() {
+        this._unmounted = true
         MirrorBackend.removeStore(this.id)
       }
       render() {
