@@ -30,7 +30,7 @@ const Emitter = Mirror({
 const Listener = Mirror({
   state(mirror) {
     mirror.one(Emitter).$state.observe(() => actions.push('listener $state'))
-    mirror.one(Emitter).$actions.tap(() => actions.push('listener $actions'))
+    mirror.one(Emitter).$actions.observe(() => actions.push('listener $actions'))
     return most.of(undefined)
   }
 })()
