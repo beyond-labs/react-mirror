@@ -51,7 +51,7 @@ const createMirrorBackend = () => {
             if (ADD_STREAMS_ASYNC) {
               warning(
                 false,
-                'Accessing "mirror.%s" after a store has been added is ineffcient, you ' +
+                'Accessing "mirror.%s" after a store has been added is inefficient, you ' +
                   'can batch queries with `updateStore` to improve performance',
                 streamName
               )
@@ -121,12 +121,15 @@ const createMirrorBackend = () => {
 
     store.dispatch = createCursorAPI((cursorMethods, query) => {
       const dispatch = (type, payload, retryIfSelectionEmpty = true) => {
-        invariant(
-          storeMap[store.id],
-          'Cannot dispatch actions ("%s") from a store ("%s") that does not exist',
-          type,
-          store.id
-        )
+        if (!storeMap[store.id]) {
+          warning(
+            false,
+            'Cannot dispatch actions ("%s") from a store ("%s") that does not exist',
+            type,
+            store.id
+          )
+          return
+        }
         const stores = cursorBackend.query(store.id, query)
         if (stores.length || !retryIfSelectionEmpty) {
           stores.forEach(id => {

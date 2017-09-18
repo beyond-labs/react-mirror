@@ -3,10 +3,15 @@ import {storiesOf} from '@storybook/react'
 import {action} from '@storybook/addon-actions'
 import Counter, {MultiCounter} from './Counter'
 import BMICalculator from './BMICalculator'
-import CombineEventsWithTest from './CombineEventsWithTest'
-import PremountEventOrderTest from './PremountEventOrderTest'
-import UnmountErrorTest from './UnmountErrorTest'
-import TeardownTest from './TeardownTest'
+import {
+  ChildrenExcludesSelfTest,
+  CombineEventsWithTest,
+  InitialPropsTest,
+  PremountEventOrderTest,
+  TeardownExcludesIsolatedTest,
+  TeardownTest,
+  UnmountErrorTest
+} from './Testing'
 
 storiesOf('Counter', module)
   .add('default', () =>
@@ -16,7 +21,10 @@ storiesOf('Counter', module)
 
 storiesOf('BMI Calculator', module).add('default', () => <BMICalculator />)
 storiesOf('Testing', module)
-  .add('CombineEventsWithTest', () => <CombineEventsWithTest />)
-  .add('PremountEventOrderTest', () => <PremountEventOrderTest />)
-  .add('UnmountErrorTest', () => <UnmountErrorTest />)
-  .add('TeardownTest', () => <TeardownTest />)
+  .add('ChildrenExcludesSelf', () => <ChildrenExcludesSelfTest />)
+  .add('CombineEventsWith', () => <CombineEventsWithTest />)
+  .add('InitialProps', () => <InitialPropsTest />)
+  .add('PremountEventOrder', () => <PremountEventOrderTest />)
+  .add('TeardownExcludesIsolated', () => <TeardownExcludesIsolatedTest />)
+  .add('Teardown', () => <TeardownTest />)
+  .add('UnmountError', () => <UnmountErrorTest />)

@@ -1,10 +1,5 @@
 const isAction = action => {
-  if (
-    action &&
-    typeof action.type === 'string' &&
-    action.hasOwnProperty('payload') &&
-    typeof action.store === 'string'
-  ) {
+  if (action && typeof action.type === 'string') {
     return true
   }
   return false

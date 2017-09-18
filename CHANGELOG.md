@@ -59,3 +59,8 @@ This is important if one store combines multiple streams from another store, & d
 
 * no `setState` errors after components unmount
 * stores receive `TEARDOWN` properly
+
+## not released
+
+* downgrade error to warning (dispatch from unmounted store)
+* `handleActions` considers all objects with `.type` to be actions
