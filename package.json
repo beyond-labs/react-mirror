@@ -1,6 +1,6 @@
 {
   "name": "react-mirror",
-  "version": "2.0.0-alpha.5",
+  "version": "2.0.0-alpha.6",
   "description": "Fractal state management for React",
   "keywords": [
     "react",
@@ -27,7 +27,7 @@
   "dependencies": {
     "invariant": "^2.2.2",
     "most": "^1.3.0",
-    "react": "^15.5.4",
+    "react": "^16.0.0",
     "regenerator-runtime": "^0.10.5",
     "warning": "^3.0.0"
   },
@@ -40,7 +40,7 @@
     "eslint": "3.16.1",
     "eslint-config-react-app": "0.6.2",
     "eslint-plugin-flowtype": "2.21.0",
-    "eslint-plugin-import": "2.0.1",
+    "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-jsx-a11y": "4.0.0",
     "eslint-plugin-react": "6.4.1",
     "regenerator-runtime": "0.10.5",
