@@ -437,54 +437,57 @@ var emptyDisposable = {
 
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 
-  // Non-mutating array operations
+// Non-mutating array operations
 
-  // cons :: a -> [a] -> [a]
-  // a with x prepended
-  // remove :: Int -> [a] -> [a]
-  // remove element at index
-  function remove (i, a) {  // eslint-disable-line complexity
-    if (i < 0) {
-      throw new TypeError('i must be >= 0')
-    }
-
-    var l = a.length;
-    if (l === 0 || i >= l) { // exit early if index beyond end of array
-      return a
-    }
-
-    if (l === 1) { // exit early if index in bounds and length === 1
-      return []
-    }
-
-    return unsafeRemove(i, a, l - 1)
+// cons :: a -> [a] -> [a]
+// a with x prepended
+// remove :: Int -> [a] -> [a]
+// remove element at index
+function remove(i, a) {
+  // eslint-disable-line complexity
+  if (i < 0) {
+    throw new TypeError('i must be >= 0');
   }
 
-  // unsafeRemove :: Int -> [a] -> Int -> [a]
-  // Internal helper to remove element at index
-  function unsafeRemove (i, a, l) {
-    var b = new Array(l);
-    var j;
-    for (j = 0; j < i; ++j) {
-      b[j] = a[j];
-    }
-    for (j = i; j < l; ++j) {
-      b[j] = a[j + 1];
-    }
-
-    return b
+  var l = a.length;
+  if (l === 0 || i >= l) {
+    // exit early if index beyond end of array
+    return a;
   }
 
-  // findIndex :: a -> [a] -> Int
-  // find index of x in a, from the left
-  function findIndex (x, a) {
-    for (var i = 0, l = a.length; i < l; ++i) {
-      if (x === a[i]) {
-        return i
-      }
-    }
-    return -1
+  if (l === 1) {
+    // exit early if index in bounds and length === 1
+    return [];
   }
+
+  return unsafeRemove(i, a, l - 1);
+}
+
+// unsafeRemove :: Int -> [a] -> Int -> [a]
+// Internal helper to remove element at index
+function unsafeRemove(i, a, l) {
+  var b = new Array(l);
+  var j = void 0;
+  for (j = 0; j < i; ++j) {
+    b[j] = a[j];
+  }
+  for (j = i; j < l; ++j) {
+    b[j] = a[j + 1];
+  }
+
+  return b;
+}
+
+// findIndex :: a -> [a] -> Int
+// find index of x in a, from the left
+function findIndex(x, a) {
+  for (var i = 0, l = a.length; i < l; ++i) {
+    if (x === a[i]) {
+      return i;
+    }
+  }
+  return -1;
+}
 
 function insertWhen(x, a, f) {
   var l = a.length;
@@ -868,7 +871,7 @@ var createMirrorBackend = function createMirrorBackend() {
             store.queryTypes.push(streamName);
             store.queryResults.push([]);
             if (ADD_STREAMS_ASYNC) {
-              warning(false, 'Accessing "mirror.%s" after a store has been added is ineffcient, you ' + 'can batch queries with `updateStore` to improve performance', streamName);
+              warning(false, 'Accessing "mirror.%s" after a store has been added is inefficient, you ' + 'can batch queries with `updateStore` to improve performance', streamName);
               onStoreUpdated({ store: store, op: 'update' });
             }
 
@@ -953,7 +956,10 @@ var createMirrorBackend = function createMirrorBackend() {
       var dispatch = function dispatch(type, payload) {
         var retryIfSelectionEmpty = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
-        invariant(storeMap[store.id], 'Cannot dispatch actions ("%s") from a store ("%s") that does not exist', type, store.id);
+        if (!storeMap[store.id]) {
+          warning(false, 'Cannot dispatch actions ("%s") from a store ("%s") that does not exist', type, store.id);
+          return;
+        }
         var stores = cursorBackend.query(store.id, query);
         if (stores.length || !retryIfSelectionEmpty) {
           stores.forEach(function (id) {
@@ -1164,7 +1170,7 @@ var instantiseMapToProps = function instantiseMapToProps(mapToProps) {
   var CALLED_ONCE = void 0;
   var instantisedMapToProps = function instantisedMapToProps(state, props) {
     var result = mapToProps(state, props);
-    if (!CALLED_ONCE && typeof result === 'function') {
+    if (!CALLED_ONCE && typeof result === "function") {
       mapToProps = result;
       result = mapToProps(state, props);
     }
@@ -1186,10 +1192,10 @@ function createMirrorDecorator() {
         pure = _config$pure === undefined ? true : _config$pure;
 
     if (!(name instanceof Array)) name = [name];
-    if (typeof mapToProps !== 'function') {
+    if (typeof mapToProps !== "function") {
       mapToProps = function mapToProps(state, _ref) {
         var withName = _ref.withName,
-            props = objectWithoutProperties(_ref, ['withName']);
+            props = objectWithoutProperties(_ref, ["withName"]);
         return _extends({}, props, state);
       };
     }
@@ -1210,10 +1216,10 @@ function createMirrorDecorator() {
         return null;
       };
     }
-    var _name = WrappedComponent.displayName || WrappedComponent.name || 'Component';
+    var _name = WrappedComponent.displayName || WrappedComponent.name || "Component";
     var stateless = !WrappedComponent.prototype.render;
     invariant(name.every(function (name) {
-      return typeof name === 'string';
+      return typeof name === "string";
     }), '`name` should be a string or array of strings (at "%s")', _name);
 
     var getPropNames = function getPropNames() {
@@ -1221,7 +1227,7 @@ function createMirrorDecorator() {
 
       if (!(name instanceof Array)) name = [name];
       return name.filter(function (name) {
-        return typeof name === 'string';
+        return typeof name === "string";
       }).sort();
     };
 
@@ -1243,16 +1249,16 @@ function createMirrorDecorator() {
         Object.assign(_this, { onReceivedProps: onReceivedProps });
 
         var _MirrorBackend$addSto = MirrorBackend.addStore(context.id, {
-          requesting: ['$state', '$props'],
+          requesting: ["$state", "$props"],
           identifiers: [].concat(toConsumableArray(name), toConsumableArray(getPropNames(_this.props.withName)), [Mirror.__COMPONENT_IDENTIFIER__]),
           streams: function streams(mirror, dispatch) {
             $props = $props.startWith(props).skipRepeatsWith(pure.propsEqual.bind(_this)).tap(function (props) {
               return _this._props = props;
             });
-            var $state = typeof state === 'function' && state.call(_this, mirror, dispatch);
+            var $state = typeof state === "function" && state.call(_this, mirror, dispatch);
             warning(!state || $state && $state.subscribe, '`state` should return a stream, did you forget a "return" statement? (at "%s")', [_name].concat(name.filter(function (name) {
-              return typeof name === 'string';
-            }).join(', ')));
+              return typeof name === "string";
+            }).join(", ")));
             if (!state || !$state || !$state.subscribe) return { $props: $props };
             $state = $state.skipRepeatsWith(pure.stateEqual.bind(_this)).filter(function (state) {
               return state !== undefined;
@@ -1280,31 +1286,34 @@ function createMirrorDecorator() {
           if (_this._unmounted) return;
           _this.setState(function (_ref2) {
             var updateCount = _ref2.updateCount;
-            return { updateCount: updateCount + 1, propsState: propsState };
+            return {
+              updateCount: updateCount + 1,
+              propsState: propsState
+            };
           });
         }).then(scheduler.removeStream.bind(null, id));
         return _this;
       }
 
       createClass(Mirror, [{
-        key: 'getWrappedInstance',
+        key: "getWrappedInstance",
         value: function getWrappedInstance() {
           invariant(!stateless, "Stateless components (eg, `() => {}`) don't have refs, and therefore can't be unwrapped.");
           return this.wrappedInstance;
         }
       }, {
-        key: 'getChildContext',
+        key: "getChildContext",
         value: function getChildContext() {
           return { id: this.id };
         }
       }, {
-        key: 'componentWillReceiveProps',
-        value: function componentWillReceiveProps(nextProps) {
+        key: "UNSAFE_componentWillReceiveProps",
+        value: function UNSAFE_componentWillReceiveProps(nextProps) {
           var nextName = getPropNames(nextProps.withName);
           var currentName = getPropNames(this.props.withName);
           if (JSON.stringify(nextName) !== JSON.stringify(currentName)) {
             MirrorBackend.updateStore(this.id, {
-              requesting: ['$state', '$props'],
+              requesting: ["$state", "$props"],
               identifiers: [].concat(toConsumableArray(name), toConsumableArray(nextName), [Mirror.__COMPONENT_IDENTIFIER__]),
               metadata: { instance: this }
             });
@@ -1312,18 +1321,18 @@ function createMirrorDecorator() {
           this.onReceivedProps(nextProps);
         }
       }, {
-        key: 'shouldComponentUpdate',
+        key: "shouldComponentUpdate",
         value: function shouldComponentUpdate(nextProps, nextState) {
           return nextState.updateCount > this.state.updateCount;
         }
       }, {
-        key: 'componentWillUnmount',
+        key: "componentWillUnmount",
         value: function componentWillUnmount() {
           this._unmounted = true;
           MirrorBackend.removeStore(this.id);
         }
       }, {
-        key: 'render',
+        key: "render",
         value: function render() {
           var _this2 = this;
 
@@ -1344,7 +1353,7 @@ function createMirrorDecorator() {
       return Mirror;
     }(React.Component);
 
-    Mirror.displayName = 'Mirror(' + _name + ')';
+    Mirror.displayName = "Mirror(" + _name + ")";
     Mirror.contextTypes = {
       id: function id() {}
     };
@@ -1363,8 +1372,8 @@ function createMirrorDecorator() {
       }
 
       var _MirrorBackend$addSto2 = MirrorBackend.addStore(null, {
-        identifiers: ['MIRROR/static', 'MIRROR/static/' + _name],
-        requesting: ['$props', '$state'],
+        identifiers: ["MIRROR/static", "MIRROR/static/" + _name],
+        requesting: ["$props", "$state"],
         metadata: {
           static: Mirror
         }
@@ -1379,12 +1388,18 @@ function createMirrorDecorator() {
     };
 
     Object.defineProperties(Mirror, {
-      mirror: { get: function get$$1() {
+      mirror: {
+        get: function get$$1() {
           return createStaticCursors(), Mirror.mirror;
-        }, configurable: true },
-      dispatch: { get: function get$$1() {
+        },
+        configurable: true
+      },
+      dispatch: {
+        get: function get$$1() {
           return createStaticCursors(), Mirror.dispatch;
-        }, configurable: true }
+        },
+        configurable: true
+      }
     });
 
     Mirror.__WITH_NAME_CACHE__ = Mirror.__COMPONENT_IDENTIFIER__.__WITH_NAME_CACHE__ || {};
@@ -1414,7 +1429,7 @@ function createMirrorDecorator() {
 }
 
 var isAction = function isAction(action) {
-  if (action && typeof action.type === 'string' && action.hasOwnProperty('payload') && typeof action.store === 'string') {
+  if (action && typeof action.type === 'string') {
     return true;
   }
   return false;
