@@ -853,7 +853,7 @@ var createMirrorBackend = function createMirrorBackend() {
 
     Object.assign(store, { identifiers: identifiers, metadata: metadata });
 
-    invariant(!identifiers.some(couldBeStoreId), 'Cannot precede all-uppercase identifiers with "_" ("%s") because they could ' + 'conflict with internally-used IDs', identifiers.find(couldBeStoreId));
+    invariant(!identifiers.some(couldBeStoreId), 'Cannot precede all-uppercase identifiers with "_" ("%s") because they could ' + "conflict with internally-used IDs", identifiers.find(couldBeStoreId));
 
     var $storeDeleted = $queryResults.filter(function () {
       return !storeMap[store.id];
@@ -863,7 +863,7 @@ var createMirrorBackend = function createMirrorBackend() {
 
     store.mirror = createCursorAPI(function (cursorMethods, query) {
       var cursor = {};
-      requesting.concat('$actions').forEach(function (streamName) {
+      requesting.concat("$actions").forEach(function (streamName) {
         Object.defineProperty(cursor, streamName, {
           get: function get() {
             var queryIndex = store.queries.length;
@@ -871,13 +871,18 @@ var createMirrorBackend = function createMirrorBackend() {
             store.queryTypes.push(streamName);
             store.queryResults.push([]);
             if (ADD_STREAMS_ASYNC) {
-              warning(false, 'Accessing "mirror.%s" after a store has been added is inefficient, you ' + 'can batch queries with `updateStore` to improve performance', streamName);
-              onStoreUpdated({ store: store, op: 'update' });
+              // warning(
+              //   false,
+              //   'Accessing "mirror.%s" after a store has been added is inefficient, you ' +
+              //     'can batch queries with `updateStore` to improve performance',
+              //   streamName
+              // )
+              onStoreUpdated({ store: store, op: "update" });
             }
 
             var teardown = function teardown(store) {
               return {
-                type: 'TEARDOWN',
+                type: "TEARDOWN",
                 payload: undefined,
                 store: store
               };
@@ -889,7 +894,7 @@ var createMirrorBackend = function createMirrorBackend() {
               var prev = store.queryResults[queryIndex];
               store.queryResults[queryIndex] = stores;
               var $stores = stores.map(function (id) {
-                if (id === store.id && query.length && streamName === '$state') {
+                if (id === store.id && query.length && streamName === "$state") {
                   return undefined;
                 }
                 var $stream = storeMap[id] && storeMap[id].streams[streamName];
@@ -901,7 +906,7 @@ var createMirrorBackend = function createMirrorBackend() {
               }).filter(function (s) {
                 return s;
               });
-              if (streamName === '$actions') {
+              if (streamName === "$actions") {
                 var deletedStores = [];
                 var next = new Set(stores);
                 var _iteratorNormalCompletion = true;
@@ -911,6 +916,7 @@ var createMirrorBackend = function createMirrorBackend() {
                 try {
                   for (var _iterator = prev[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
                     var id = _step.value;
+
                     if (!next.has(id)) deletedStores.push(id);
                   }
                 } catch (err) {
@@ -934,11 +940,11 @@ var createMirrorBackend = function createMirrorBackend() {
               }
             }).switchLatest().until($storeDeleted);
 
-            return streamName === '$actions' ? $stream.concat(most.of(teardown(store.id))) : $stream;
+            return streamName === "$actions" ? $stream.concat(most.of(teardown(store.id))) : $stream;
           }
         });
       });
-      Object.defineProperty(cursor, '$stores', {
+      Object.defineProperty(cursor, "$stores", {
         get: function get() {
           return $queryResults.map(function () {
             return {
@@ -969,7 +975,7 @@ var createMirrorBackend = function createMirrorBackend() {
         }
 
         $queryResults.until($storeDeleted.tap(function () {
-          warning(false, 'No store matched an action ("%s"), & the dispatcher ("%s") was ' + "removed. We've discarded the action. You could try dispatching the " + 'action via a proxy.', type, store.id);
+          warning(false, 'No store matched an action ("%s"), & the dispatcher ("%s") was ' + "removed. We've discarded the action. You could try dispatching the " + "action via a proxy.", type, store.id);
         })).map(function () {
           return cursorBackend.query(store.id, query);
         }).filter(function (stores) {
@@ -977,7 +983,11 @@ var createMirrorBackend = function createMirrorBackend() {
         }).take(1).observe(function (stores) {
           stores.forEach(function (id) {
             if (storeMap[id]) {
-              storeMap[id].streams.$actions.push({ type: type, payload: payload, store: id });
+              storeMap[id].streams.$actions.push({
+                type: type,
+                payload: payload,
+                store: id
+              });
             }
           });
         });
@@ -991,7 +1001,11 @@ var createMirrorBackend = function createMirrorBackend() {
           dispatch = _createEventSource2.push,
           $actions = _createEventSource2.$stream;
 
-      var initialize = { type: 'INITIALIZE', payload: undefined, store: store.id };
+      var initialize = {
+        type: "INITIALIZE",
+        payload: undefined,
+        store: store.id
+      };
       store.streams.$actions = $actions.startWith(initialize).until($storeDeleted).thru(multicast);
       store.streams.$actions.push = dispatch;
     }
@@ -1052,19 +1066,19 @@ var createMirrorBackend = function createMirrorBackend() {
 
       _updateStore(store, { requesting: requesting, streams: streams, identifiers: identifiers, metadata: metadata });
       storeMap[store.id] = store;
-      onStoreUpdated({ store: store, op: 'add' });
+      onStoreUpdated({ store: store, op: "add" });
 
       return store;
     },
     removeStore: function removeStore(storeId) {
       var store = storeMap[storeId];
       if (!store) return;
-      invariant(store !== root, 'Cannot remove root store');
+      invariant(store !== root, "Cannot remove root store");
 
       var traverse = function traverse(store) {
         Object.values(store.children).forEach(traverse);
         delete storeMap[store.id];
-        onStoreUpdated({ store: store, op: 'remove' });
+        onStoreUpdated({ store: store, op: "remove" });
       };
       traverse(store);
 
@@ -1082,7 +1096,7 @@ var createMirrorBackend = function createMirrorBackend() {
       invariant(store, 'Cannot update a store ("%s") that does not exist', storeId);
 
       _updateStore(store, { requesting: requesting, streams: streams, identifiers: identifiers, metadata: metadata });
-      onStoreUpdated({ store: store, op: 'update' });
+      onStoreUpdated({ store: store, op: "update" });
 
       return store;
     },
@@ -1098,7 +1112,7 @@ var createMirrorBackend = function createMirrorBackend() {
   };
 
   backend.root = root = backend.addStore(null, {
-    identifiers: ['MIRROR/root'],
+    identifiers: ["MIRROR/root"],
     metadata: { root: true }
   });
 
