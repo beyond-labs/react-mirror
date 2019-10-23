@@ -1,5 +1,5 @@
 {
-  "name": "react-mirror",
+  "name": "react-mirror-old",
   "version": "0.3.4",
   "description": "Fractal state management for react",
   "keywords": [
@@ -20,7 +20,7 @@
   "repository": "ashtonwar/react-mirror",
   "scripts": {
     "prebuild": "rimraf index.js index.js.map",
-    "build": "set NODE_ENV=production&& webpack",
+    "build": "NODE_ENV=production webpack",
     "postbuild": "git add . --all",
     "start": "jest --watch",
     "test": "jest"
